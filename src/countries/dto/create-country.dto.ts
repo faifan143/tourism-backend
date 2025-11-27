@@ -13,4 +13,3 @@ export class CreateCountryDto {
   @IsString()
   imageUrl?: string;
 }
-

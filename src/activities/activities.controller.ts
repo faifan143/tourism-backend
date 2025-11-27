@@ -7,8 +7,11 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { JwtGuard } from '../common/guards/jwt.guard';
@@ -24,8 +27,12 @@ export class ActivitiesController {
   @Post()
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  create(@Body() dto: CreateActivityDto) {
-    return this.activitiesService.create(dto);
+  @UseInterceptors(FileInterceptor('image'))
+  create(
+    @Body() dto: CreateActivityDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
+    return this.activitiesService.create(dto, image);
   }
 
   @Get()
@@ -41,8 +48,13 @@ export class ActivitiesController {
   @Patch(':id')
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  update(@Param('id') id: string, @Body() dto: UpdateActivityDto) {
-    return this.activitiesService.update(id, dto);
+  @UseInterceptors(FileInterceptor('image'))
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateActivityDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
+    return this.activitiesService.update(id, dto, image);
   }
 
   @Delete(':id')

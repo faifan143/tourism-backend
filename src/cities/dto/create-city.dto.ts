@@ -16,4 +16,3 @@ export class CreateCityDto {
   @IsString()
   countryId!: string;
 }
-

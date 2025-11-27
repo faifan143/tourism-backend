@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { UpdateCategoriesDto } from './dto/update-categories.dto';
@@ -11,15 +12,29 @@ import { UpdateThemesDto } from './dto/update-themes.dto';
 
 @Injectable()
 export class PlacesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
-  create(dto: CreatePlaceDto) {
+  async create(dto: CreatePlaceDto, imageFiles?: Express.Multer.File[]) {
+    let imageUrls = dto.imageUrls || [];
+
+    if (imageFiles && imageFiles.length > 0) {
+      const uploadPromises = imageFiles.map((file) =>
+        this.storageService.uploadFile(file),
+      );
+      const uploadResults = await Promise.all(uploadPromises);
+      const uploadedUrls = uploadResults.map((result) => result.publicUrl);
+      imageUrls = [...imageUrls, ...uploadedUrls];
+    }
+
     return this.prisma.place.create({
       data: {
         name: dto.name,
         description: dto.description,
         location: dto.location,
-        imageUrls: dto.imageUrls || [],
+        imageUrls,
         cityId: dto.cityId,
       },
     });
@@ -50,8 +65,35 @@ export class PlacesService {
     return place;
   }
 
-  async update(id: string, dto: UpdatePlaceDto) {
+  async update(
+    id: string,
+    dto: UpdatePlaceDto,
+    imageFiles?: Express.Multer.File[],
+  ) {
     await this.ensureExists(id);
+
+    let imageUrls = dto.imageUrls;
+
+    if (imageFiles && imageFiles.length > 0) {
+      const uploadPromises = imageFiles.map((file) =>
+        this.storageService.uploadFile(file),
+      );
+      const uploadResults = await Promise.all(uploadPromises);
+      const uploadedUrls = uploadResults.map((result) => result.publicUrl);
+
+      // If imageUrls is provided, merge with uploaded files
+      // Otherwise, use only uploaded files
+      if (imageUrls) {
+        imageUrls = [...imageUrls, ...uploadedUrls];
+      } else {
+        // Get existing imageUrls and merge with new ones
+        const existing = await this.prisma.place.findUnique({
+          where: { id },
+          select: { imageUrls: true },
+        });
+        imageUrls = [...(existing?.imageUrls || []), ...uploadedUrls];
+      }
+    }
 
     return this.prisma.place.update({
       where: { id },
@@ -59,7 +101,7 @@ export class PlacesService {
         name: dto.name,
         description: dto.description,
         location: dto.location,
-        imageUrls: dto.imageUrls,
+        imageUrls,
         cityId: dto.cityId,
       },
     });

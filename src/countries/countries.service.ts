@@ -1,18 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { CreateCountryDto } from './dto/create-country.dto';
 import { UpdateCountryDto } from './dto/update-country.dto';
 
 @Injectable()
 export class CountriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
-  create(dto: CreateCountryDto) {
+  async create(dto: CreateCountryDto, imageFile?: Express.Multer.File) {
+    let imageUrl = dto.imageUrl;
+
+    if (imageFile) {
+      const uploadResult = await this.storageService.uploadFile(imageFile);
+      imageUrl = uploadResult.publicUrl;
+    }
+
     return this.prisma.country.create({
       data: {
         name: dto.name,
         description: dto.description,
-        imageUrl: dto.imageUrl,
+        imageUrl,
       },
     });
   }
@@ -35,15 +46,26 @@ export class CountriesService {
     return country;
   }
 
-  async update(id: string, dto: UpdateCountryDto) {
+  async update(
+    id: string,
+    dto: UpdateCountryDto,
+    imageFile?: Express.Multer.File,
+  ) {
     await this.ensureExists(id);
+
+    let imageUrl = dto.imageUrl;
+
+    if (imageFile) {
+      const uploadResult = await this.storageService.uploadFile(imageFile);
+      imageUrl = uploadResult.publicUrl;
+    }
 
     return this.prisma.country.update({
       where: { id },
       data: {
         name: dto.name,
         description: dto.description,
-        imageUrl: dto.imageUrl,
+        imageUrl,
       },
     });
   }
@@ -69,4 +91,3 @@ export class CountriesService {
     }
   }
 }
-

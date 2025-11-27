@@ -1,18 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { CreateCityDto } from './dto/create-city.dto';
 import { UpdateCityDto } from './dto/update-city.dto';
 
 @Injectable()
 export class CitiesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
-  create(dto: CreateCityDto) {
+  async create(dto: CreateCityDto, imageFile?: Express.Multer.File) {
+    let imageUrl = dto.imageUrl;
+
+    if (imageFile) {
+      const uploadResult = await this.storageService.uploadFile(imageFile);
+      imageUrl = uploadResult.publicUrl;
+    }
+
     return this.prisma.city.create({
       data: {
         name: dto.name,
         description: dto.description,
-        imageUrl: dto.imageUrl,
+        imageUrl,
         countryId: dto.countryId,
       },
     });
@@ -37,15 +48,26 @@ export class CitiesService {
     return city;
   }
 
-  async update(id: string, dto: UpdateCityDto) {
+  async update(
+    id: string,
+    dto: UpdateCityDto,
+    imageFile?: Express.Multer.File,
+  ) {
     await this.ensureExists(id);
+
+    let imageUrl = dto.imageUrl;
+
+    if (imageFile) {
+      const uploadResult = await this.storageService.uploadFile(imageFile);
+      imageUrl = uploadResult.publicUrl;
+    }
 
     return this.prisma.city.update({
       where: { id },
       data: {
         name: dto.name,
         description: dto.description,
-        imageUrl: dto.imageUrl,
+        imageUrl,
         countryId: dto.countryId,
       },
     });
@@ -72,4 +94,3 @@ export class CitiesService {
     }
   }
 }
-

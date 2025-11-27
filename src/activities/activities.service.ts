@@ -1,18 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
 
 @Injectable()
 export class ActivitiesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
-  create(dto: CreateActivityDto) {
+  async create(dto: CreateActivityDto, imageFile?: Express.Multer.File) {
+    let imageUrl = dto.imageUrl;
+
+    if (imageFile) {
+      const uploadResult = await this.storageService.uploadFile(imageFile);
+      imageUrl = uploadResult.publicUrl;
+    }
+
     return this.prisma.activity.create({
       data: {
         name: dto.name,
         description: dto.description,
-        imageUrl: dto.imageUrl,
+        imageUrl,
         placeId: dto.placeId,
       },
     });
@@ -43,15 +54,26 @@ export class ActivitiesService {
     return activity;
   }
 
-  async update(id: string, dto: UpdateActivityDto) {
+  async update(
+    id: string,
+    dto: UpdateActivityDto,
+    imageFile?: Express.Multer.File,
+  ) {
     await this.ensureExists(id);
+
+    let imageUrl = dto.imageUrl;
+
+    if (imageFile) {
+      const uploadResult = await this.storageService.uploadFile(imageFile);
+      imageUrl = uploadResult.publicUrl;
+    }
 
     return this.prisma.activity.update({
       where: { id },
       data: {
         name: dto.name,
         description: dto.description,
-        imageUrl: dto.imageUrl,
+        imageUrl,
         placeId: dto.placeId,
       },
     });

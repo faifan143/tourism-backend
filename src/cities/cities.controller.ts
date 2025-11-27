@@ -7,8 +7,11 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { JwtGuard } from '../common/guards/jwt.guard';
@@ -24,8 +27,12 @@ export class CitiesController {
   @Post()
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  create(@Body() dto: CreateCityDto) {
-    return this.citiesService.create(dto);
+  @UseInterceptors(FileInterceptor('image'))
+  create(
+    @Body() dto: CreateCityDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
+    return this.citiesService.create(dto, image);
   }
 
   @Get()
@@ -41,8 +48,13 @@ export class CitiesController {
   @Patch(':id')
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  update(@Param('id') id: string, @Body() dto: UpdateCityDto) {
-    return this.citiesService.update(id, dto);
+  @UseInterceptors(FileInterceptor('image'))
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateCityDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
+    return this.citiesService.update(id, dto, image);
   }
 
   @Delete(':id')
@@ -52,4 +64,3 @@ export class CitiesController {
     return this.citiesService.remove(id);
   }
 }
-
