@@ -6,9 +6,27 @@ import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
 import { StorageModule } from './storage/storage.module';
 import { CountriesModule } from './countries/countries.module';
+import { CitiesModule } from './cities/cities.module';
+import { CategoriesModule } from './categories/categories.module';
+import { ThemesModule } from './themes/themes.module';
+import { PlacesModule } from './places/places.module';
+import { ActivitiesModule } from './activities/activities.module';
+import { BrowseModule } from './browse/browse.module';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, AuthModule, StorageModule, CountriesModule],
+  imports: [
+    ConfigModule,
+    DatabaseModule,
+    AuthModule,
+    StorageModule,
+    CountriesModule,
+    CitiesModule,
+    CategoriesModule,
+    ThemesModule,
+    PlacesModule,
+    ActivitiesModule,
+    BrowseModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
