@@ -24,7 +24,7 @@ enum Role {
 
 model Country {
   id          String   @id @default(uuid())
-  name        String
+  name        String @unique
   description String?
   imageUrl    String?
   cities      City[]
@@ -34,7 +34,7 @@ model Country {
 
 model City {
   id          String   @id @default(uuid())
-  name        String
+  name        String @unique
   description String?
   imageUrl    String?
   countryId   String
@@ -46,19 +46,19 @@ model City {
 
 model Category {
   id     String  @id @default(uuid())
-  name   String
+  name   String @unique
   places Place[] @relation("PlaceCategories")
 }
 
 model Theme {
   id     String  @id @default(uuid())
-  name   String
+  name   String @unique   
   places Place[] @relation("PlaceThemes")
 }
 
 model Place {
   id          String     @id @default(uuid())
-  name        String
+  name        String @unique
   description String?
   location    String?
   imageUrls   String[]
@@ -76,7 +76,7 @@ model Place {
 
 model Activity {
   id          String     @id @default(uuid())
-  name        String
+  name        String @unique  
   description String?
   imageUrl    String?
   placeId     String?
@@ -89,6 +89,7 @@ model Activity {
 
 model Embedding {
   id        String                 @id @default(uuid())
+  vector    Bytes?                
   ownerType String // "place" or "activity"
   ownerId   String                 @unique // references Place.id or Activity.id
   place     Place?                 @relation("PlaceEmbedding", fields: [ownerId], references: [id], map: "embedding_place_ownerId_fkey")
@@ -99,4 +100,5 @@ model UserPreference {
   id     String                 @id @default(uuid())
   userId String                 @unique
   user   User                   @relation(fields: [userId], references: [id])
+  vector Bytes?                
 }

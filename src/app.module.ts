@@ -12,6 +12,8 @@ import { ThemesModule } from './themes/themes.module';
 import { PlacesModule } from './places/places.module';
 import { ActivitiesModule } from './activities/activities.module';
 import { BrowseModule } from './browse/browse.module';
+import { EmbeddingsModule } from './embeddings/embeddings.module';
+import { PreferencesModule } from './preferences/preferences.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { BrowseModule } from './browse/browse.module';
     PlacesModule,
     ActivitiesModule,
     BrowseModule,
+    EmbeddingsModule,
+    PreferencesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
