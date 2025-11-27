@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String          @id @default(uuid())
+  email       String          @unique
+  password    String
+  role        Role            @default(USER)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  preferences UserPreference?
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model Country {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  imageUrl    String?
+  cities      City[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model City {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  imageUrl    String?
+  countryId   String
+  country     Country  @relation(fields: [countryId], references: [id])
+  places      Place[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Category {
+  id     String  @id @default(uuid())
+  name   String
+  places Place[] @relation("PlaceCategories")
+}
+
+model Theme {
+  id     String  @id @default(uuid())
+  name   String
+  places Place[] @relation("PlaceThemes")
+}
+
+model Place {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  location    String?
+  imageUrls   String[]
+  cityId      String
+  city        City       @relation(fields: [cityId], references: [id])
+  categories  Category[] @relation("PlaceCategories")
+  themes      Theme[]    @relation("PlaceThemes")
+  activities  Activity[]
+  // embedding references Embedding.ownerId
+  embedding   Embedding? @relation("PlaceEmbedding")
+  popularity  Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Activity {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  imageUrl    String?
+  placeId     String?
+  place       Place?     @relation(fields: [placeId], references: [id])
+  // embedding references Embedding.ownerId
+  embedding   Embedding? @relation("ActivityEmbedding")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Embedding {
+  id        String                 @id @default(uuid())
+  ownerType String // "place" or "activity"
+  ownerId   String                 @unique // references Place.id or Activity.id
+  place     Place?                 @relation("PlaceEmbedding", fields: [ownerId], references: [id], map: "embedding_place_ownerId_fkey")
+  activity  Activity?              @relation("ActivityEmbedding", fields: [ownerId], references: [id], map: "embedding_activity_ownerId_fkey")
+}
+
+model UserPreference {
+  id     String                 @id @default(uuid())
+  userId String                 @unique
+  user   User                   @relation(fields: [userId], references: [id])
+}
