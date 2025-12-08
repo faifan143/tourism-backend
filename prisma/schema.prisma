@@ -8,13 +8,16 @@ datasource db {
 }
 
 model User {
-  id          String          @id @default(uuid())
-  email       String          @unique
+  id          String           @id @default(uuid())
+  email       String           @unique
   password    String
-  role        Role            @default(USER)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  role        Role             @default(USER)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
   preferences UserPreference?
+
+  reservations     Reservation[]
+  tripReservations TripReservation[]
 }
 
 enum Role {
@@ -24,7 +27,7 @@ enum Role {
 
 model Country {
   id          String   @id @default(uuid())
-  name        String @unique
+  name        String   @unique
   description String?
   imageUrl    String?
   cities      City[]
@@ -34,71 +37,152 @@ model Country {
 
 model City {
   id          String   @id @default(uuid())
-  name        String @unique
+  name        String   @unique
   description String?
   imageUrl    String?
   countryId   String
   country     Country  @relation(fields: [countryId], references: [id])
   places      Place[]
+  hotels      Hotel[]
+  trips       Trip[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
 model Category {
-  id     String  @id @default(uuid())
-  name   String @unique
-  places Place[] @relation("PlaceCategories")
+  id     String   @id @default(uuid())
+  name   String   @unique
+  places Place[]  @relation("PlaceCategories")
 }
 
 model Theme {
-  id     String  @id @default(uuid())
-  name   String @unique   
-  places Place[] @relation("PlaceThemes")
+  id     String   @id @default(uuid())
+  name   String   @unique
+  places Place[]  @relation("PlaceThemes")
 }
 
 model Place {
-  id          String     @id @default(uuid())
-  name        String @unique
+  id          String      @id @default(uuid())
+  name        String      @unique
   description String?
   location    String?
   imageUrls   String[]
   cityId      String
-  city        City       @relation(fields: [cityId], references: [id])
-  categories  Category[] @relation("PlaceCategories")
-  themes      Theme[]    @relation("PlaceThemes")
+  city        City        @relation(fields: [cityId], references: [id])
+  categories  Category[]  @relation("PlaceCategories")
+  themes      Theme[]     @relation("PlaceThemes")
   activities  Activity[]
-  // embedding references Embedding.ownerId
-  embedding   Embedding? @relation("PlaceEmbedding")
-  popularity  Int        @default(0)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  embedding   Embedding?  @relation("PlaceEmbedding")
+  popularity  Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model Activity {
   id          String     @id @default(uuid())
-  name        String @unique  
+  name        String     @unique
   description String?
   imageUrl    String?
   placeId     String?
   place       Place?     @relation(fields: [placeId], references: [id])
-  // embedding references Embedding.ownerId
   embedding   Embedding? @relation("ActivityEmbedding")
+  trips       Trip[]     @relation("TripActivities")
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
 
 model Embedding {
-  id        String                 @id @default(uuid())
-  vector    Bytes?                
-  ownerType String // "place" or "activity"
-  ownerId   String                 @unique // references Place.id or Activity.id
-  place     Place?                 @relation("PlaceEmbedding", fields: [ownerId], references: [id], map: "embedding_place_ownerId_fkey")
-  activity  Activity?              @relation("ActivityEmbedding", fields: [ownerId], references: [id], map: "embedding_activity_ownerId_fkey")
+  id        String     @id @default(uuid())
+  vector    Bytes?
+  ownerType String
+  ownerId   String     @unique
+  place     Place?     @relation("PlaceEmbedding", fields: [ownerId], references: [id], map: "embedding_place_ownerId_fkey")
+  activity  Activity?  @relation("ActivityEmbedding", fields: [ownerId], references: [id], map: "embedding_activity_ownerId_fkey")
 }
 
 model UserPreference {
-  id     String                 @id @default(uuid())
-  userId String                 @unique
-  user   User                   @relation(fields: [userId], references: [id])
-  vector Bytes?                
+  id     String    @id @default(uuid())
+  userId String    @unique
+  user   User      @relation(fields: [userId], references: [id])
+  vector Bytes?
+}
+
+model Hotel {
+  id          String        @id @default(uuid())
+  name        String        @unique
+  description String?
+  imageUrl    String?
+  cityId      String
+  city        City          @relation(fields: [cityId], references: [id])
+
+  pricePerNight Float       @default(100)
+
+  reservations  Reservation[]
+  trips         Trip[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Reservation {
+  id        String             @id @default(uuid())
+  userId    String
+  hotelId   String
+
+  user      User               @relation(fields: [userId], references: [id])
+  hotel     Hotel              @relation(fields: [hotelId], references: [id])
+
+  startDate DateTime
+  endDate   DateTime
+  guests    Int                @default(1)
+
+  totalPrice Float
+
+  status    ReservationStatus  @default(PENDING)
+
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+model Trip {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  imageUrl    String?
+
+  cityId      String
+  city        City          @relation(fields: [cityId], references: [id])
+
+  hotelId     String?
+  hotel       Hotel?        @relation(fields: [hotelId], references: [id])
+
+  activities  Activity[]    @relation("TripActivities")
+
+  price       Float
+
+  reservations TripReservation[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model TripReservation {
+  id       String             @id @default(uuid())
+  userId   String
+  tripId   String
+
+  user     User               @relation(fields: [userId], references: [id])
+  trip     Trip               @relation(fields: [tripId], references: [id])
+
+  guests   Int                @default(1)
+  status   ReservationStatus  @default(PENDING)
+
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
 }
