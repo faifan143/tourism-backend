@@ -57,6 +57,7 @@ export class TripsService {
         city: true,
         hotel: true,
         activities: true,
+        reservations: true,
       },
     });
 

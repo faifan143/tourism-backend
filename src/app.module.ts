@@ -18,6 +18,7 @@ import { TripReservationsModule } from './trip-reservations/trip-reservations.mo
 import { BrowseModule } from './browse/browse.module';
 import { EmbeddingsModule } from './embeddings/embeddings.module';
 import { PreferencesModule } from './preferences/preferences.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { PreferencesModule } from './preferences/preferences.module';
     BrowseModule,
     EmbeddingsModule,
     PreferencesModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

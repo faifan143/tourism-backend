@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { ReservationStatus } from '@prisma/client';
 import { CreateHotelDto } from './dto/create-hotel.dto';
 import { UpdateHotelDto } from './dto/update-hotel.dto';
 import { CreateRoomTypeDto } from './dto/create-room-type.dto';
@@ -63,6 +64,7 @@ export class HotelsService {
       include: {
         city: true,
         roomTypes: true,
+        trips: true,
       },
     });
 
@@ -113,6 +115,15 @@ export class HotelsService {
     return this.prisma.roomType.findMany({
       where: { hotelId },
       orderBy: { createdAt: 'desc' },
+      include: {
+        reservations: {
+          where: {
+            status: {
+              in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED],
+            },
+          },
+        },
+      },
     });
   }
 
