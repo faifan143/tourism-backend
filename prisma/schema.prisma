@@ -117,9 +117,23 @@ model Hotel {
 
   pricePerNight Float       @default(100)
 
-  reservations  Reservation[]
+  roomTypes     RoomType[]
   trips         Trip[]
 
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model RoomType {
+  id          String        @id @default(uuid())
+  hotelId     String
+  hotel       Hotel         @relation(fields: [hotelId], references: [id])
+  name        String
+  description String?
+  maxGuests   Int
+  pricePerNight Float
+  capacity    Int
+  reservations Reservation[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
@@ -127,10 +141,10 @@ model Hotel {
 model Reservation {
   id        String             @id @default(uuid())
   userId    String
-  hotelId   String
+  roomTypeId String
 
   user      User               @relation(fields: [userId], references: [id])
-  hotel     Hotel              @relation(fields: [hotelId], references: [id])
+  roomType  RoomType           @relation(fields: [roomTypeId], references: [id])
 
   startDate DateTime
   endDate   DateTime

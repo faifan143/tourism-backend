@@ -1,0 +1,83 @@
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { Role } from '@prisma/client';
+import { User } from '../common/decorators/user.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
+import { JwtGuard } from '../common/guards/jwt.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { TripReservationsService } from './trip-reservations.service';
+import { CreateTripReservationDto } from './dto/create-trip-reservation.dto';
+import { UpdateTripReservationStatusDto } from './dto/update-trip-reservation-status.dto';
+
+@Controller('trip-reservations')
+export class TripReservationsController {
+  constructor(
+    private readonly tripReservationsService: TripReservationsService,
+  ) {}
+
+  @Post()
+  @UseGuards(JwtGuard)
+  create(
+    @User('sub') userId: string,
+    @Body() dto: CreateTripReservationDto,
+  ) {
+    return this.tripReservationsService.create(userId, dto);
+  }
+
+  @Get('me')
+  @UseGuards(JwtGuard)
+  findMyTripReservations(@User('sub') userId: string) {
+    return this.tripReservationsService.findAllForUser(userId);
+  }
+
+  @Get('me/:id')
+  @UseGuards(JwtGuard)
+  findMyTripReservation(@User('sub') userId: string, @Param('id') id: string) {
+    return this.tripReservationsService.findOneForUser(userId, id);
+  }
+
+  @Patch('me/:id/status')
+  @UseGuards(JwtGuard)
+  updateMyTripReservationStatus(
+    @User('sub') userId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateTripReservationStatusDto,
+  ) {
+    return this.tripReservationsService.updateStatusForUser(
+      userId,
+      id,
+      dto.status,
+    );
+  }
+
+  @Get()
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  findAll() {
+    return this.tripReservationsService.findAll();
+  }
+
+  @Get(':id')
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  findOne(@Param('id') id: string) {
+    return this.tripReservationsService.findOne(id);
+  }
+
+  @Patch(':id/status')
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateTripReservationStatusDto,
+  ) {
+    return this.tripReservationsService.updateStatus(id, dto.status);
+  }
+}

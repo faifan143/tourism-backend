@@ -11,6 +11,10 @@ import { CategoriesModule } from './categories/categories.module';
 import { ThemesModule } from './themes/themes.module';
 import { PlacesModule } from './places/places.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { HotelsModule } from './hotels/hotels.module';
+import { ReservationsModule } from './reservations/reservations.module';
+import { TripsModule } from './trips/trips.module';
+import { TripReservationsModule } from './trip-reservations/trip-reservations.module';
 import { BrowseModule } from './browse/browse.module';
 import { EmbeddingsModule } from './embeddings/embeddings.module';
 import { PreferencesModule } from './preferences/preferences.module';
@@ -27,6 +31,10 @@ import { PreferencesModule } from './preferences/preferences.module';
     ThemesModule,
     PlacesModule,
     ActivitiesModule,
+    HotelsModule,
+    ReservationsModule,
+    TripsModule,
+    TripReservationsModule,
     BrowseModule,
     EmbeddingsModule,
     PreferencesModule,

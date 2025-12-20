@@ -3,11 +3,20 @@ import { CountriesModule } from '../countries/countries.module';
 import { CitiesModule } from '../cities/cities.module';
 import { PlacesModule } from '../places/places.module';
 import { ActivitiesModule } from '../activities/activities.module';
+import { HotelsModule } from '../hotels/hotels.module';
+import { TripsModule } from '../trips/trips.module';
 import { BrowseService } from './browse.service';
 import { BrowseController } from './browse.controller';
 
 @Module({
-  imports: [CountriesModule, CitiesModule, PlacesModule, ActivitiesModule],
+  imports: [
+    CountriesModule,
+    CitiesModule,
+    PlacesModule,
+    ActivitiesModule,
+    HotelsModule,
+    TripsModule,
+  ],
   controllers: [BrowseController],
   providers: [BrowseService],
 })

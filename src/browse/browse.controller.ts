@@ -29,4 +29,24 @@ export class BrowseController {
   getActivities(@Query('placeId') placeId?: string) {
     return this.browseService.getActivities(placeId);
   }
+
+  @Get('hotels')
+  getHotels(@Query('cityId') cityId?: string) {
+    return this.browseService.getHotels(cityId);
+  }
+
+  @Get('hotels/:id')
+  getHotel(@Param('id') id: string) {
+    return this.browseService.getHotel(id);
+  }
+
+  @Get('trips')
+  getTrips(@Query('cityId') cityId?: string) {
+    return this.browseService.getTrips(cityId);
+  }
+
+  @Get('trips/:id')
+  getTrip(@Param('id') id: string) {
+    return this.browseService.getTrip(id);
+  }
 }
