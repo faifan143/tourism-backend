@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UploadedFiles,
   UseGuards,
@@ -53,6 +54,18 @@ export class PlacesController {
   @Roles(Role.ADMIN)
   @UseInterceptors(FilesInterceptor('images', 10))
   update(
+    @Param('id') id: string,
+    @Body() dto: UpdatePlaceDto,
+    @UploadedFiles() images?: Express.Multer.File[],
+  ) {
+    return this.placesService.update(id, dto, images);
+  }
+
+  @Put(':id')
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @UseInterceptors(FilesInterceptor('images', 10))
+  updatePut(
     @Param('id') id: string,
     @Body() dto: UpdatePlaceDto,
     @UploadedFiles() images?: Express.Multer.File[],

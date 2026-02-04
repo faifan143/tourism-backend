@@ -154,9 +154,63 @@ export class PlacesService {
       data.imageUrls = imageUrls;
     }
 
+    // Handle categoryIds (similar to create method)
+    let categoryIds: string[] | undefined;
+    const rawCategoryIds = (dto as any).categoryIds;
+    if (rawCategoryIds !== undefined && rawCategoryIds !== null) {
+      if (Array.isArray(rawCategoryIds)) {
+        categoryIds = rawCategoryIds;
+      } else {
+        // Handle case where multer might give us a single value
+        categoryIds = [String(rawCategoryIds)];
+      }
+    }
+
+    if (categoryIds !== undefined) {
+      if (categoryIds.length > 0) {
+        data.categories = {
+          set: categoryIds.map((id) => ({ id })),
+        };
+      } else {
+        // Empty array means remove all categories
+        data.categories = {
+          set: [],
+        };
+      }
+    }
+
+    // Handle themeIds (similar to create method)
+    let themeIds: string[] | undefined;
+    const rawThemeIds = (dto as any).themeIds;
+    if (rawThemeIds !== undefined && rawThemeIds !== null) {
+      if (Array.isArray(rawThemeIds)) {
+        themeIds = rawThemeIds;
+      } else {
+        // Handle case where multer might give us a single value
+        themeIds = [String(rawThemeIds)];
+      }
+    }
+
+    if (themeIds !== undefined) {
+      if (themeIds.length > 0) {
+        data.themes = {
+          set: themeIds.map((id) => ({ id })),
+        };
+      } else {
+        // Empty array means remove all themes
+        data.themes = {
+          set: [],
+        };
+      }
+    }
+
     return this.prisma.place.update({
       where: { id },
       data,
+      include: {
+        categories: true,
+        themes: true,
+      },
     });
   }
 
