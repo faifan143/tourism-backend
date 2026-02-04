@@ -40,6 +40,11 @@ export class BrowseController {
     return this.browseService.getHotel(id);
   }
 
+  @Get('hotels/:id/room-types')
+  getHotelRoomTypes(@Param('id') id: string) {
+    return this.browseService.getHotelRoomTypes(id);
+  }
+
   @Get('trips')
   getTrips(@Query('cityId') cityId?: string) {
     return this.browseService.getTrips(cityId);

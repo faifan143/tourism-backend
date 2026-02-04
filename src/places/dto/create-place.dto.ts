@@ -5,6 +5,7 @@ import {
   IsUUID,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreatePlaceDto {
   @IsString()
@@ -26,4 +27,26 @@ export class CreatePlaceDto {
 
   @IsUUID()
   cityId!: string;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    if (Array.isArray(value)) return value.filter((v) => v !== null && v !== undefined && v !== '');
+    if (typeof value === 'string') return [value];
+    return [value];
+  })
+  @IsArray()
+  @IsUUID(undefined, { each: true })
+  categoryIds?: string[];
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    if (Array.isArray(value)) return value.filter((v) => v !== null && v !== undefined && v !== '');
+    if (typeof value === 'string') return [value];
+    return [value];
+  })
+  @IsArray()
+  @IsUUID(undefined, { each: true })
+  themeIds?: string[];
 }

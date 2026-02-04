@@ -38,11 +38,15 @@ export class BrowseService {
   }
 
   getHotels(cityId?: string) {
-    return this.hotelsService.findAll(cityId);
+    return this.hotelsService.findAll(cityId, false);
   }
 
   getHotel(id: string) {
-    return this.hotelsService.findOne(id);
+    return this.hotelsService.findOne(id, false);
+  }
+
+  getHotelRoomTypes(hotelId: string) {
+    return this.hotelsService.findRoomTypesByHotel(hotelId, false);
   }
 
   getTrips(cityId?: string) {

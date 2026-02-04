@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Role } from '@prisma/client';
 import { ROLES_KEY } from '../decorators/roles.decorator';
+import { hasAdminAccess } from '../utils/roles.util';
 import { JwtPayload } from '../../auth/interfaces/jwt-payload.interface';
 
 @Injectable()
@@ -30,6 +31,12 @@ export class RolesGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
+    // If ADMIN is required, allow both ADMIN and SUB_ADMIN
+    if (requiredRoles.includes(Role.ADMIN)) {
+      return hasAdminAccess(user.role);
+    }
+
+    // Otherwise, check exact role match
     return requiredRoles.includes(user.role);
   }
 }

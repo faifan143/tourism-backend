@@ -19,6 +19,7 @@ import { BrowseModule } from './browse/browse.module';
 import { EmbeddingsModule } from './embeddings/embeddings.module';
 import { PreferencesModule } from './preferences/preferences.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     EmbeddingsModule,
     PreferencesModule,
     DashboardModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

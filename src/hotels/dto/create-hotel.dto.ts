@@ -8,7 +8,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { CreateRoomTypeDto } from './create-room-type.dto';
 
 export class CreateHotelDto {
@@ -27,11 +27,29 @@ export class CreateHotelDto {
   @IsUUID()
   cityId!: string;
 
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    return typeof value === 'string' ? Number(value) : value;
+  })
   @IsNumber()
   @Min(0)
   pricePerNight!: number;
 
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    // If it's already an array, return it
+    if (Array.isArray(value)) return value;
+    // If it's a string, try to parse it as JSON
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateRoomTypeDto)

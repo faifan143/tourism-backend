@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Role, User } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
+import { canCreateRole, hasAdminAccess } from '../common/utils/roles.util';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
@@ -21,7 +22,7 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto, actor: JwtPayload) {
-    if (actor.role !== Role.ADMIN) {
+    if (!hasAdminAccess(actor.role)) {
       throw new ForbiddenException('Only administrators can register new users.');
     }
 
@@ -35,6 +36,13 @@ export class AuthService {
 
     const password = await this.hashPassword(dto.password);
     const role = dto.role ?? Role.USER;
+
+    // Validate that the actor can create the requested role
+    if (!canCreateRole(actor.role, role)) {
+      throw new ForbiddenException(
+        'You do not have permission to create users with this role.',
+      );
+    }
 
     const createdUser = await this.prisma.user.create({
       data: {

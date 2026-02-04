@@ -34,7 +34,11 @@ export class ActivitiesService {
       where: placeId ? { placeId } : undefined,
       orderBy: { createdAt: 'desc' },
       include: {
-        place: true,
+        place: {
+          include: {
+            city: true,
+          },
+        },
       },
     });
   }
@@ -43,7 +47,11 @@ export class ActivitiesService {
     const activity = await this.prisma.activity.findUnique({
       where: { id },
       include: {
-        place: true,
+        place: {
+          include: {
+            city: true,
+          },
+        },
       },
     });
 

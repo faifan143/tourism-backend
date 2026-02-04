@@ -1,0 +1,70 @@
+flowchart TD
+    Start([Start / بدء]) --> UserRegister[User registers: email + password<br/>المستخدم يسجل: البريد الإلكتروني + كلمة المرور]
+    
+    UserRegister --> ShowForm[Show preference form<br/>عرض نموذج التفضيلات]
+    
+    ShowForm --> FormContent[Form contains:<br/>النموذج يحتوي على:]
+    
+    subgraph FormContent["Preference Form / نموذج التفضيلات"]
+        Questions[Questions to answer<br/>أسئلة للإجابة]
+        ImageSelect[Images to multi-select<br/>صور للاختيار المتعدد]
+    end
+    
+    FormContent --> Questions
+    FormContent --> ImageSelect
+    
+    Questions --> SubmitForm[User submits form<br/>المستخدم يرسل النموذج]
+    ImageSelect --> SubmitForm
+    
+    SubmitForm --> ValidateInputs{Inputs valid?<br/>المدخلات صالحة؟}
+    
+    ValidateInputs -->|No / لا| ErrorInvalid[Return error: Invalid inputs<br/>إرجاع خطأ: مدخلات غير صالحة]
+    ErrorInvalid --> End1([End / نهاية])
+    
+    ValidateInputs -->|Yes / نعم| BackendAPI[Backend API receives request<br/>Backend API استقبال الطلب في الـ]
+    
+    BackendAPI --> ProcessInputs[Process User Inputs<br/>معالجة مدخلات المستخدم]
+    
+    subgraph ProcessInputs["Input Processing / معالجة المدخلات"]
+        ProcessTextual[Process Textual Answers<br/>معالجة الإجابات النصية]
+        ProcessVisual[Process Selected Images<br/>معالجة الصور المختارة]
+    end
+    
+    ProcessInputs --> ProcessTextual
+    ProcessInputs --> ProcessVisual
+    
+    ProcessVisual --> BackendProcess[Backend Processing<br/>معالجة الخلفية]
+    
+    subgraph BackendProcess["Backend / معالجة الخلفية"]
+        Preprocess[Preprocessing: resize + normalize<br/>معالجة أولية للصورة]
+        FeatureExtract[Feature extraction: CNN / CLIP<br/>استخراج الخصائص]
+        GenerateEmbedding[Generate Embedding Vector<br/>توليد متجه التضمين]
+    end
+    
+    BackendProcess --> Preprocess
+    Preprocess --> FeatureExtract
+    FeatureExtract --> GenerateEmbedding
+    
+    GenerateEmbedding --> CheckEmbedding{Embedding created?<br/>تم توليد التضمين؟}
+    
+    CheckEmbedding -->|No / لا| ErrorExtraction[Return error: Feature extraction failed<br/>إرجاع خطأ: فشل استخراج الخصائص]
+    ErrorExtraction --> End2([End / نهاية])
+    
+    CheckEmbedding -->|Yes / نعم| CombineData[Combine Textual + Visual Data<br/>دمج البيانات النصية والمرئية]
+    ProcessTextual --> CombineData
+    
+    CombineData --> LearnPrefs[Learn User Preferences<br/>تعلم تفضيلات المستخدم]
+    LearnPrefs --> SavePreferences[Save to UserPreference table<br/>حفظ في جدول تفضيلات المستخدم]
+    SavePreferences --> Success([Success / نجاح])
+    Success --> End3([End / نهاية])
+
+    style Start fill:#90EE90
+    style End1 fill:#FFB6C1
+    style End2 fill:#FFB6C1
+    style End3 fill:#90EE90
+    style ValidateImage fill:#FFE4B5
+    style CheckEmbedding fill:#FFE4B5
+    style BackendProcess fill:#E6E6FA
+    style ErrorInvalid fill:#FFB6C1
+    style ErrorExtraction fill:#FFB6C1
+

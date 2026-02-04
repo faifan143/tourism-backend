@@ -21,6 +21,23 @@ export class TripsService {
       imageUrl = uploadResult.publicUrl;
     }
 
+    // Ensure price is a number (handle multipart form data)
+    const price = typeof dto.price === 'string' 
+      ? Number(dto.price) 
+      : dto.price;
+
+    // Ensure activityIds is an array (handle multipart form data quirks)
+    let activityIds: string[] | undefined;
+    const rawActivityIds = (dto as any).activityIds;
+    if (rawActivityIds !== undefined && rawActivityIds !== null) {
+      if (Array.isArray(rawActivityIds)) {
+        activityIds = rawActivityIds;
+      } else {
+        // Handle case where multer might give us a single value
+        activityIds = [String(rawActivityIds)];
+      }
+    }
+
     return this.prisma.trip.create({
       data: {
         name: dto.name,
@@ -28,10 +45,10 @@ export class TripsService {
         imageUrl,
         cityId: dto.cityId,
         hotelId: dto.hotelId,
-        price: dto.price,
-        activities: dto.activityIds
+        price,
+        activities: activityIds && activityIds.length > 0
           ? {
-              connect: dto.activityIds.map((id) => ({ id })),
+              connect: activityIds.map((id) => ({ id })),
             }
           : undefined,
       },
@@ -82,16 +99,24 @@ export class TripsService {
       imageUrl = uploadResult.publicUrl;
     }
 
+    const data: any = {
+      name: dto.name,
+      description: dto.description,
+      imageUrl,
+      cityId: dto.cityId,
+      hotelId: dto.hotelId,
+    };
+
+    // Only include price if it's defined and convert to number
+    if (dto.price !== undefined) {
+      data.price = typeof dto.price === 'string' 
+        ? Number(dto.price) 
+        : dto.price;
+    }
+
     return this.prisma.trip.update({
       where: { id },
-      data: {
-        name: dto.name,
-        description: dto.description,
-        imageUrl,
-        cityId: dto.cityId,
-        hotelId: dto.hotelId,
-        price: dto.price,
-      },
+      data,
     });
   }
 

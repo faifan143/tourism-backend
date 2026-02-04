@@ -2,7 +2,7 @@ import { IsDateString, IsInt, IsUUID, Min } from 'class-validator';
 
 export class CreateReservationDto {
   @IsUUID()
-  roomTypeId!: string;
+  roomId!: string;
 
   @IsDateString()
   startDate!: string;

@@ -29,13 +29,55 @@ export class PlacesService {
       imageUrls = [...imageUrls, ...uploadedUrls];
     }
 
+    const data: any = {
+      name: dto.name,
+      description: dto.description,
+      location: dto.location,
+      imageUrls,
+      cityId: dto.cityId,
+    };
+
+    // Ensure categoryIds is an array (handle multipart form data quirks)
+    let categoryIds: string[] | undefined;
+    const rawCategoryIds = (dto as any).categoryIds;
+    if (rawCategoryIds !== undefined && rawCategoryIds !== null) {
+      if (Array.isArray(rawCategoryIds)) {
+        categoryIds = rawCategoryIds;
+      } else {
+        // Handle case where multer might give us a single value
+        categoryIds = [String(rawCategoryIds)];
+      }
+    }
+
+    if (categoryIds && categoryIds.length > 0) {
+      data.categories = {
+        connect: categoryIds.map((id) => ({ id })),
+      };
+    }
+
+    // Ensure themeIds is an array (handle multipart form data quirks)
+    let themeIds: string[] | undefined;
+    const rawThemeIds = (dto as any).themeIds;
+    if (rawThemeIds !== undefined && rawThemeIds !== null) {
+      if (Array.isArray(rawThemeIds)) {
+        themeIds = rawThemeIds;
+      } else {
+        // Handle case where multer might give us a single value
+        themeIds = [String(rawThemeIds)];
+      }
+    }
+
+    if (themeIds && themeIds.length > 0) {
+      data.themes = {
+        connect: themeIds.map((id) => ({ id })),
+      };
+    }
+
     return this.prisma.place.create({
-      data: {
-        name: dto.name,
-        description: dto.description,
-        location: dto.location,
-        imageUrls,
-        cityId: dto.cityId,
+      data,
+      include: {
+        categories: true,
+        themes: true,
       },
     });
   }
@@ -44,6 +86,11 @@ export class PlacesService {
     return this.prisma.place.findMany({
       where: cityId ? { cityId } : undefined,
       orderBy: { createdAt: 'desc' },
+      include: {
+        city: true,
+        categories: true,
+        themes: true,
+      },
     });
   }
 
@@ -81,9 +128,9 @@ export class PlacesService {
       const uploadResults = await Promise.all(uploadPromises);
       const uploadedUrls = uploadResults.map((result) => result.publicUrl);
 
-      // If imageUrls is provided, merge with uploaded files
-      // Otherwise, use only uploaded files
-      if (imageUrls) {
+      // If imageUrls is provided in DTO, merge with uploaded files
+      // Otherwise, get existing imageUrls and merge with new ones
+      if (imageUrls !== undefined) {
         imageUrls = [...imageUrls, ...uploadedUrls];
       } else {
         // Get existing imageUrls and merge with new ones
@@ -95,15 +142,21 @@ export class PlacesService {
       }
     }
 
+    const data: any = {
+      name: dto.name,
+      description: dto.description,
+      location: dto.location,
+      cityId: dto.cityId,
+    };
+
+    // Only include imageUrls if it's defined (either from DTO or after processing uploaded files)
+    if (imageUrls !== undefined) {
+      data.imageUrls = imageUrls;
+    }
+
     return this.prisma.place.update({
       where: { id },
-      data: {
-        name: dto.name,
-        description: dto.description,
-        location: dto.location,
-        imageUrls,
-        cityId: dto.cityId,
-      },
+      data,
     });
   }
 

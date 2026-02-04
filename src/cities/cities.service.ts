@@ -33,12 +33,18 @@ export class CitiesService {
     return this.prisma.city.findMany({
       where: countryId ? { countryId } : undefined,
       orderBy: { createdAt: 'desc' },
+      include: {
+        country: true,
+      },
     });
   }
 
   async findOne(id: string) {
     const city = await this.prisma.city.findUnique({
       where: { id },
+      include: {
+        country: true,
+      },
     });
 
     if (!city) {

@@ -22,6 +22,8 @@ export class AuthController {
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN)
   async register(@Body() dto: RegisterDto, @User() actor: JwtPayload) {
+    // RolesGuard allows both ADMIN and SUB_ADMIN (via hasAdminAccess check)
+    // Additional validation in service prevents privilege escalation
     return this.authService.register(dto, actor);
   }
 

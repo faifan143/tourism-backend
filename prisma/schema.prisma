@@ -22,6 +22,7 @@ model User {
 
 enum Role {
   ADMIN
+  SUB_ADMIN
   USER
 }
 
@@ -133,6 +134,18 @@ model RoomType {
   maxGuests   Int
   pricePerNight Float
   capacity    Int
+  rooms       Room[]
+  reservations Reservation[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Room {
+  id          String        @id @default(uuid())
+  roomTypeId  String
+  roomType    RoomType      @relation(fields: [roomTypeId], references: [id])
+  roomNumber  String?
+  status      RoomStatus    @default(AVAILABLE)
   reservations Reservation[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -141,10 +154,12 @@ model RoomType {
 model Reservation {
   id        String             @id @default(uuid())
   userId    String
-  roomTypeId String
+  roomId    String?
+  roomTypeId String?
 
   user      User               @relation(fields: [userId], references: [id])
-  roomType  RoomType           @relation(fields: [roomTypeId], references: [id])
+  room      Room?              @relation(fields: [roomId], references: [id])
+  roomType  RoomType?          @relation(fields: [roomTypeId], references: [id])
 
   startDate DateTime
   endDate   DateTime
@@ -199,4 +214,10 @@ enum ReservationStatus {
   PENDING
   CONFIRMED
   CANCELLED
+}
+
+enum RoomStatus {
+  AVAILABLE
+  BOOKED
+  MAINTENANCE
 }
