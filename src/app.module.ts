@@ -20,10 +20,13 @@ import { EmbeddingsModule } from './embeddings/embeddings.module';
 import { PreferencesModule } from './preferences/preferences.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { UsersModule } from './users/users.module';
+import { CommonModule } from './common/common.module';
+import { PermissionsModule } from './permissions/permissions.module';
 
 @Module({
   imports: [
     ConfigModule,
+    CommonModule,
     DatabaseModule,
     AuthModule,
     StorageModule,
@@ -42,6 +45,7 @@ import { UsersModule } from './users/users.module';
     PreferencesModule,
     DashboardModule,
     UsersModule,
+    PermissionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

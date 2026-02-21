@@ -12,10 +12,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Role } from '@prisma/client';
+import { PermissionScope, Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Scope } from '../common/decorators/scope.decorator';
 import { JwtGuard } from '../common/guards/jwt.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { ScopeGuard } from '../common/guards/scope.guard';
 import { TripsService } from './trips.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
@@ -48,8 +50,8 @@ export class TripsController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.TRIP, 'id')
   @UseInterceptors(FileInterceptor('image'))
   update(
     @Param('id') id: string,
@@ -67,8 +69,8 @@ export class TripsController {
   }
 
   @Patch(':id/activities')
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.TRIP, 'id')
   updateActivities(
     @Param('id') id: string,
     @Body() dto: UpdateTripActivitiesDto,
@@ -77,8 +79,8 @@ export class TripsController {
   }
 
   @Patch(':id/hotel')
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.TRIP, 'id')
   updateHotel(@Param('id') id: string, @Body() dto: UpdateTripHotelDto) {
     return this.tripsService.updateHotel(id, dto);
   }

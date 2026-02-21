@@ -12,10 +12,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Role } from '@prisma/client';
+import { PermissionScope, Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Scope } from '../common/decorators/scope.decorator';
 import { JwtGuard } from '../common/guards/jwt.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { ScopeGuard } from '../common/guards/scope.guard';
 import { User } from '../common/decorators/user.decorator';
 import { HotelsService } from './hotels.service';
 import { CreateHotelDto } from './dto/create-hotel.dto';
@@ -60,8 +62,8 @@ export class HotelsController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.HOTEL, 'id')
   @UseInterceptors(FileInterceptor('image'))
   update(
     @Param('id') id: string,
@@ -88,8 +90,8 @@ export class HotelsController {
   }
 
   @Post(':hotelId/room-types')
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.HOTEL, 'hotelId')
   addRoomType(
     @Param('hotelId') hotelId: string,
     @Body() dto: CreateRoomTypeDto,
@@ -98,8 +100,8 @@ export class HotelsController {
   }
 
   @Patch(':hotelId/room-types/:roomTypeId')
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.HOTEL, 'hotelId')
   updateRoomType(
     @Param('roomTypeId') roomTypeId: string,
     @Body() dto: UpdateRoomTypeDto,
@@ -108,8 +110,8 @@ export class HotelsController {
   }
 
   @Delete(':hotelId/room-types/:roomTypeId')
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.HOTEL, 'hotelId')
   removeRoomType(@Param('roomTypeId') roomTypeId: string) {
     return this.hotelsService.removeRoomType(roomTypeId);
   }
@@ -120,8 +122,8 @@ export class HotelsController {
   }
 
   @Post(':hotelId/room-types/:roomTypeId/rooms')
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.HOTEL, 'hotelId')
   addRoom(
     @Param('roomTypeId') roomTypeId: string,
     @Body() dto: CreateRoomDto,
@@ -130,8 +132,8 @@ export class HotelsController {
   }
 
   @Patch(':hotelId/room-types/:roomTypeId/rooms/:roomId')
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.HOTEL, 'hotelId')
   updateRoom(
     @Param('roomId') roomId: string,
     @Body() dto: UpdateRoomDto,
@@ -140,15 +142,15 @@ export class HotelsController {
   }
 
   @Delete(':hotelId/room-types/:roomTypeId/rooms/:roomId')
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.HOTEL, 'hotelId')
   removeRoom(@Param('roomId') roomId: string) {
     return this.hotelsService.removeRoom(roomId);
   }
 
   @Post(':hotelId/room-types/:roomTypeId/rooms/bulk-add')
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.HOTEL, 'hotelId')
   bulkAddRooms(
     @Param('roomTypeId') roomTypeId: string,
     @Body() dto: BulkAddRoomsDto,
@@ -157,8 +159,8 @@ export class HotelsController {
   }
 
   @Post(':hotelId/room-types/:roomTypeId/rooms/bulk-remove')
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.HOTEL, 'hotelId')
   bulkRemoveRooms(
     @Param('roomTypeId') roomTypeId: string,
     @Body() dto: BulkRemoveRoomsDto,

@@ -16,8 +16,9 @@ model User {
   updatedAt   DateTime         @updatedAt
   preferences UserPreference?
 
-  reservations     Reservation[]
-  tripReservations TripReservation[]
+  reservations        Reservation[]
+  tripReservations    TripReservation[]
+  subAdminPermissions SubAdminPermission[]
 }
 
 enum Role {
@@ -208,6 +209,21 @@ model TripReservation {
 
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
+}
+
+model SubAdminPermission {
+  id         String          @id @default(uuid())
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope      PermissionScope
+  resourceId String
+
+  @@unique([userId, scope, resourceId])
+}
+
+enum PermissionScope {
+  HOTEL
+  TRIP
 }
 
 enum ReservationStatus {

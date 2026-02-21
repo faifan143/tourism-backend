@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { Role, User } from '@prisma/client';
+import { Role, User, SubAdminPermission } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { canCreateRole, hasAdminAccess } from '../common/utils/roles.util';
 import { LoginDto } from './dto/login.dto';
@@ -71,10 +71,12 @@ export class AuthService {
     }
 
     const accessToken = await this.signToken(user);
+    const permissions = await this.getPermissions(user.id, user.role);
 
     return {
       accessToken,
       user: this.stripSensitiveFields(user),
+      permissions,
     };
   }
 
@@ -87,7 +89,12 @@ export class AuthService {
       throw new NotFoundException('User not found.');
     }
 
-    return this.stripSensitiveFields(user);
+    const permissions = await this.getPermissions(user.id, user.role);
+
+    return {
+      ...this.stripSensitiveFields(user),
+      permissions,
+    };
   }
 
   private async hashPassword(password: string): Promise<string> {
@@ -102,6 +109,14 @@ export class AuthService {
     };
 
     return this.jwtService.signAsync(payload);
+  }
+
+  private async getPermissions(
+    userId: string,
+    role: Role,
+  ): Promise<SubAdminPermission[]> {
+    if (role !== Role.SUB_ADMIN) return [];
+    return this.prisma.subAdminPermission.findMany({ where: { userId } });
   }
 
   private stripSensitiveFields(user: User): Omit<User, 'password'> {

@@ -15,6 +15,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { TripReservationsService } from './trip-reservations.service';
 import { CreateTripReservationDto } from './dto/create-trip-reservation.dto';
 import { UpdateTripReservationStatusDto } from './dto/update-trip-reservation-status.dto';
+import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 @Controller('trip-reservations')
 export class TripReservationsController {
@@ -60,15 +61,15 @@ export class TripReservationsController {
   @Get()
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  findAll() {
-    return this.tripReservationsService.findAll();
+  findAll(@User() actor: JwtPayload) {
+    return this.tripReservationsService.findAllForAdmin(actor);
   }
 
   @Get(':id')
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  findOne(@Param('id') id: string) {
-    return this.tripReservationsService.findOne(id);
+  findOne(@Param('id') id: string, @User() actor: JwtPayload) {
+    return this.tripReservationsService.findOneForAdmin(id, actor);
   }
 
   @Patch(':id/status')
@@ -77,7 +78,8 @@ export class TripReservationsController {
   updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateTripReservationStatusDto,
+    @User() actor: JwtPayload,
   ) {
-    return this.tripReservationsService.updateStatus(id, dto.status);
+    return this.tripReservationsService.updateStatusForAdmin(id, dto.status, actor);
   }
 }

@@ -4,8 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { ReservationStatus } from '@prisma/client';
+import { PermissionScope, ReservationStatus, Role } from '@prisma/client';
 import { CreateTripReservationDto } from './dto/create-trip-reservation.dto';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 @Injectable()
 export class TripReservationsService {
@@ -122,6 +123,54 @@ export class TripReservationsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async findAllForAdmin(actor: JwtPayload) {
+    if (actor.role === Role.ADMIN) return this.findAll();
+
+    const perms = await this.prisma.subAdminPermission.findMany({
+      where: { userId: actor.sub, scope: PermissionScope.TRIP },
+    });
+    const tripIds = perms.map((p) => p.resourceId);
+
+    return this.prisma.tripReservation.findMany({
+      where: { tripId: { in: tripIds } },
+      include: {
+        user: { select: { id: true, email: true, role: true } },
+        trip: { include: { city: true, hotel: true, activities: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findOneForAdmin(id: string, actor: JwtPayload) {
+    const reservation = await this.findOne(id);
+
+    if (actor.role === Role.SUB_ADMIN) {
+      const perm = await this.prisma.subAdminPermission.findUnique({
+        where: {
+          userId_scope_resourceId: {
+            userId: actor.sub,
+            scope: PermissionScope.TRIP,
+            resourceId: reservation.tripId,
+          },
+        },
+      });
+      if (!perm) throw new ForbiddenException('Access denied.');
+    }
+
+    return reservation;
+  }
+
+  async updateStatusForAdmin(
+    id: string,
+    status: ReservationStatus,
+    actor: JwtPayload,
+  ) {
+    if (actor.role === Role.SUB_ADMIN) {
+      await this.findOneForAdmin(id, actor);
+    }
+    return this.updateStatus(id, status);
   }
 
   async findOne(id: string) {

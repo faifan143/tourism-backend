@@ -16,6 +16,7 @@ import { ReservationsService } from './reservations.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationStatusDto } from './dto/update-reservation-status.dto';
 import { ReservationStatus } from '@prisma/client';
+import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 @Controller('reservations')
 export class ReservationsController {
@@ -59,15 +60,15 @@ export class ReservationsController {
   @Get()
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  findAll() {
-    return this.reservationsService.findAll();
+  findAll(@User() actor: JwtPayload) {
+    return this.reservationsService.findAllForAdmin(actor);
   }
 
   @Get(':id')
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  findOne(@Param('id') id: string) {
-    return this.reservationsService.findOne(id);
+  findOne(@Param('id') id: string, @User() actor: JwtPayload) {
+    return this.reservationsService.findOneForAdmin(id, actor);
   }
 
   @Patch(':id/status')
@@ -76,7 +77,8 @@ export class ReservationsController {
   updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateReservationStatusDto,
+    @User() actor: JwtPayload,
   ) {
-    return this.reservationsService.updateStatus(id, dto.status);
+    return this.reservationsService.updateStatusForAdmin(id, dto.status, actor);
   }
 }
