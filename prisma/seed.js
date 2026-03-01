@@ -670,21 +670,26 @@ const USERS = [
 async function main() {
   console.log("🌱 Starting comprehensive database seeding...\n");
 
-  // Clear existing data (optional - uncomment if you want fresh seed)
-  // console.log("⚠️  Clearing existing data...");
-  // await prisma.tripReservation.deleteMany();
-  // await prisma.reservation.deleteMany();
-  // await prisma.trip.deleteMany();
-  // await prisma.roomType.deleteMany();
-  // await prisma.hotel.deleteMany();
-  // await prisma.activity.deleteMany();
-  // await prisma.place.deleteMany();
-  // await prisma.city.deleteMany();
-  // await prisma.country.deleteMany();
-  // await prisma.userPreference.deleteMany();
-  // await prisma.user.deleteMany();
-  // await prisma.theme.deleteMany();
-  // await prisma.category.deleteMany();
+  // Clear existing data
+  console.log("⚠️  Clearing existing data...");
+  await prisma.tripReservation.deleteMany();
+  await prisma.reservation.deleteMany();
+  await prisma.room.deleteMany();
+  await prisma.roomType.deleteMany();
+  await prisma.tripStop.deleteMany();
+  await prisma.trip.deleteMany();
+  await prisma.hotel.deleteMany();
+  await prisma.embedding.deleteMany();
+  await prisma.activity.deleteMany();
+  await prisma.place.deleteMany();
+  await prisma.city.deleteMany();
+  await prisma.country.deleteMany();
+  await prisma.subAdminPermission.deleteMany();
+  await prisma.userPreference.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.theme.deleteMany();
+  await prisma.category.deleteMany();
+  console.log("  ✓ Database cleared\n");
 
   // Users -------------------------------------------------------------
   console.log("👥 Creating users...");
