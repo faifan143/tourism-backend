@@ -10,6 +10,7 @@ datasource db {
 model User {
   id          String           @id @default(uuid())
   email       String           @unique
+  username    String?          @unique
   password    String
   role        Role             @default(USER)
   createdAt   DateTime         @default(now())
@@ -38,17 +39,19 @@ model Country {
 }
 
 model City {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String    @id @default(uuid())
+  name        String    @unique
   description String?
   imageUrl    String?
   countryId   String
-  country     Country  @relation(fields: [countryId], references: [id])
+  country     Country   @relation(fields: [countryId], references: [id])
+  routeOrder  Int       @default(0) // Logical order within country (e.g. Aleppo=1, Homs=2, Damascus=3)
   places      Place[]
   hotels      Hotel[]
   trips       Trip[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  tripStops   TripStop[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Category {
@@ -76,21 +79,23 @@ model Place {
   activities  Activity[]
   embedding   Embedding?  @relation("PlaceEmbedding")
   popularity  Int         @default(0)
+  tripStops   TripStop[]  @relation("TripStopPlaces")
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 }
 
 model Activity {
-  id          String     @id @default(uuid())
-  name        String     @unique
+  id          String      @id @default(uuid())
+  name        String      @unique
   description String?
   imageUrl    String?
   placeId     String?
-  place       Place?     @relation(fields: [placeId], references: [id])
-  embedding   Embedding? @relation("ActivityEmbedding")
-  trips       Trip[]     @relation("TripActivities")
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  place       Place?      @relation(fields: [placeId], references: [id])
+  embedding   Embedding?  @relation("ActivityEmbedding")
+  trips       Trip[]      @relation("TripActivities")
+  tripStops   TripStop[]  @relation("TripStopActivities")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model Embedding {
@@ -121,6 +126,7 @@ model Hotel {
 
   roomTypes     RoomType[]
   trips         Trip[]
+  tripStops     TripStop[]
 
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -187,6 +193,7 @@ model Trip {
   hotel       Hotel?        @relation(fields: [hotelId], references: [id])
 
   activities  Activity[]    @relation("TripActivities")
+  stops       TripStop[]
 
   price       Float
 
@@ -194,6 +201,25 @@ model Trip {
 
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+}
+
+model TripStop {
+  id         String     @id @default(uuid())
+  tripId     String
+  trip       Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  cityId     String
+  city       City       @relation(fields: [cityId], references: [id])
+  hotelId    String?
+  hotel      Hotel?     @relation(fields: [hotelId], references: [id])
+  order      Int        // Sequence: 0, 1, 2... (e.g. Aleppo=0, Homs=1, Damascus=2)
+  days       Int        @default(1) // Number of days at this city (e.g. 2 = "Day 1-2: Aleppo")
+  activities Activity[] @relation("TripStopActivities")
+  places     Place[]    @relation("TripStopPlaces")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tripId, order])
 }
 
 model TripReservation {

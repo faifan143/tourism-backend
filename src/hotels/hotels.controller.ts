@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Patch,
+  Put,
   Post,
   Query,
   UploadedFile,
@@ -44,19 +45,13 @@ export class HotelsController {
   }
 
   @Get()
-  findAll(
-    @Query('cityId') cityId?: string,
-    @User('role') userRole?: Role,
-  ) {
+  findAll(@Query('cityId') cityId?: string, @User('role') userRole?: Role) {
     const isAdmin = userRole === Role.ADMIN;
     return this.hotelsService.findAll(cityId, isAdmin);
   }
 
   @Get(':id')
-  findOne(
-    @Param('id') id: string,
-    @User('role') userRole?: Role,
-  ) {
+  findOne(@Param('id') id: string, @User('role') userRole?: Role) {
     const isAdmin = userRole === Role.ADMIN;
     return this.hotelsService.findOne(id, isAdmin);
   }
@@ -66,6 +61,18 @@ export class HotelsController {
   @Scope(PermissionScope.HOTEL, 'id')
   @UseInterceptors(FileInterceptor('image'))
   update(
+    @Param('id') id: string,
+    @Body() dto: UpdateHotelDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
+    return this.hotelsService.update(id, dto, image);
+  }
+
+  @Put(':id')
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.HOTEL, 'id')
+  @UseInterceptors(FileInterceptor('image'))
+  updatePut(
     @Param('id') id: string,
     @Body() dto: UpdateHotelDto,
     @UploadedFile() image?: Express.Multer.File,
@@ -109,6 +116,16 @@ export class HotelsController {
     return this.hotelsService.updateRoomType(roomTypeId, dto);
   }
 
+  @Put(':hotelId/room-types/:roomTypeId')
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.HOTEL, 'hotelId')
+  updateRoomTypePut(
+    @Param('roomTypeId') roomTypeId: string,
+    @Body() dto: UpdateRoomTypeDto,
+  ) {
+    return this.hotelsService.updateRoomType(roomTypeId, dto);
+  }
+
   @Delete(':hotelId/room-types/:roomTypeId')
   @UseGuards(JwtGuard, ScopeGuard)
   @Scope(PermissionScope.HOTEL, 'hotelId')
@@ -124,20 +141,21 @@ export class HotelsController {
   @Post(':hotelId/room-types/:roomTypeId/rooms')
   @UseGuards(JwtGuard, ScopeGuard)
   @Scope(PermissionScope.HOTEL, 'hotelId')
-  addRoom(
-    @Param('roomTypeId') roomTypeId: string,
-    @Body() dto: CreateRoomDto,
-  ) {
+  addRoom(@Param('roomTypeId') roomTypeId: string, @Body() dto: CreateRoomDto) {
     return this.hotelsService.addRoom(roomTypeId, dto);
   }
 
   @Patch(':hotelId/room-types/:roomTypeId/rooms/:roomId')
   @UseGuards(JwtGuard, ScopeGuard)
   @Scope(PermissionScope.HOTEL, 'hotelId')
-  updateRoom(
-    @Param('roomId') roomId: string,
-    @Body() dto: UpdateRoomDto,
-  ) {
+  updateRoom(@Param('roomId') roomId: string, @Body() dto: UpdateRoomDto) {
+    return this.hotelsService.updateRoom(roomId, dto);
+  }
+
+  @Put(':hotelId/room-types/:roomTypeId/rooms/:roomId')
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.HOTEL, 'hotelId')
+  updateRoomPut(@Param('roomId') roomId: string, @Body() dto: UpdateRoomDto) {
     return this.hotelsService.updateRoom(roomId, dto);
   }
 

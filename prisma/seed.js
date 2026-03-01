@@ -13,8 +13,7 @@ const slug = (str) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
-const placeholderImage = (label) =>
-  `https://picsum.photos/seed/${slug(label)}/800/600`;
+const placeholderImage = (_label) => null;
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const pickN = (arr, n = 2) => [...arr].sort(() => 0.5 - Math.random()).slice(0, n);
@@ -776,10 +775,7 @@ async function main() {
             name: placeData.name,
             description: placeData.description,
             location: placeData.location,
-            imageUrls: [
-              placeholderImage(placeData.name),
-              placeholderImage(`${placeData.name}-2`),
-            ],
+            imageUrls: [],
             cityId: city.id,
             popularity: randPop(),
           },
@@ -820,9 +816,16 @@ async function main() {
         const activitiesToCreate = pickN(activityTemplates, 2);
 
         for (const activityName of activitiesToCreate) {
-          const activity = await prisma.activity.create({
-            data: {
-              name: `${placeData.name} - ${activityName}`,
+          const activityFullName = `${placeData.name} - ${activityName}`;
+          const activity = await prisma.activity.upsert({
+            where: { name: activityFullName },
+            update: {
+              description: `${activityName} at ${placeData.name} in ${cityData.name}.`,
+              imageUrl: placeholderImage(`${placeData.name}-${activityName}`),
+              placeId: place.id,
+            },
+            create: {
+              name: activityFullName,
               description: `${activityName} at ${placeData.name} in ${cityData.name}.`,
               imageUrl: placeholderImage(`${placeData.name}-${activityName}`),
               placeId: place.id,
@@ -852,8 +855,15 @@ async function main() {
     if (!city) continue;
 
     for (const hotelData of hotelDataArray) {
-      const hotel = await prisma.hotel.create({
-        data: {
+      const hotel = await prisma.hotel.upsert({
+        where: { name: hotelData.name },
+        update: {
+          description: hotelData.description,
+          imageUrl: placeholderImage(hotelData.name),
+          cityId: city.id,
+          pricePerNight: hotelData.pricePerNight,
+        },
+        create: {
           name: hotelData.name,
           description: hotelData.description,
           imageUrl: placeholderImage(hotelData.name),
@@ -862,6 +872,9 @@ async function main() {
         },
       });
       hotelMap.set(`${cityName}-${hotelData.name}`, hotel);
+
+      // Delete existing room types for this hotel to avoid duplicates on re-seed
+      await prisma.roomType.deleteMany({ where: { hotelId: hotel.id } });
 
       // Create room types
       for (const roomTypeData of hotelData.roomTypes) {
@@ -902,8 +915,28 @@ async function main() {
         ? pickN(cityActivities, Math.min(Math.floor(Math.random() * 3) + 2, cityActivities.length))
         : pickN(allActivities, Math.min(3, allActivities.length));
 
-      const trip = await prisma.trip.create({
-        data: {
+      // Disconnect old activities before upserting to avoid relation conflicts
+      const existingTrip = await prisma.trip.findFirst({ where: { name: tripData.name } });
+      if (existingTrip) {
+        await prisma.trip.update({
+          where: { id: existingTrip.id },
+          data: { activities: { set: [] } },
+        });
+      }
+
+      const trip = await prisma.trip.upsert({
+        where: { id: existingTrip?.id || "__new__" },
+        update: {
+          description: tripData.description,
+          imageUrl: placeholderImage(tripData.name),
+          cityId: city.id,
+          hotelId: hotel?.id,
+          price: tripData.price,
+          activities: {
+            connect: tripActivities.map(a => ({ id: a.id })),
+          },
+        },
+        create: {
           name: tripData.name,
           description: tripData.description,
           imageUrl: placeholderImage(tripData.name),

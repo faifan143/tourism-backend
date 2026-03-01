@@ -1,4 +1,5 @@
 import {
+  ArrayMinSize,
   IsArray,
   IsNumber,
   IsOptional,
@@ -6,8 +7,12 @@ import {
   IsUUID,
   MaxLength,
   Min,
+  ValidateIf,
+  ValidateNested,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { Type } from 'class-transformer';
+import { TripStopDto } from './trip-stop.dto';
 
 export class CreateTripDto {
   @IsString()
@@ -22,12 +27,23 @@ export class CreateTripDto {
   @IsString()
   imageUrl?: string;
 
+  /** Required for single-city trips. Omitted when using stops (multi-city). */
+  @ValidateIf((o) => !o.stops?.length)
   @IsUUID()
-  cityId!: string;
+  cityId?: string;
 
+  /** Optional for single-city trips. Ignored when using stops. */
   @IsOptional()
   @IsUUID()
   hotelId?: string;
+
+  /** Multi-city: ordered stops (city + optional hotel). When provided, must have at least one; cityId/hotelId are derived from first stop. */
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1, { message: 'stops must have at least one stop when provided' })
+  @ValidateNested({ each: true })
+  @Type(() => TripStopDto)
+  stops?: TripStopDto[];
 
   @IsOptional()
   @Transform(({ value }) => {

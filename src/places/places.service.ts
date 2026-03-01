@@ -217,6 +217,26 @@ export class PlacesService {
   async remove(id: string) {
     await this.ensureExists(id);
 
+    // Delete embedding for this place
+    await this.prisma.embedding.deleteMany({
+      where: { ownerId: id },
+    });
+
+    // Delete activities linked to this place (and their embeddings)
+    const activities = await this.prisma.activity.findMany({
+      where: { placeId: id },
+      select: { id: true },
+    });
+    const activityIds = activities.map((a) => a.id);
+    if (activityIds.length > 0) {
+      await this.prisma.embedding.deleteMany({
+        where: { ownerId: { in: activityIds } },
+      });
+      await this.prisma.activity.deleteMany({
+        where: { id: { in: activityIds } },
+      });
+    }
+
     await this.prisma.place.delete({
       where: { id },
     });

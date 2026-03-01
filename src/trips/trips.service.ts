@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { CreateTripDto } from './dto/create-trip.dto';
@@ -13,6 +17,29 @@ export class TripsService {
     private readonly storageService: StorageService,
   ) {}
 
+  /** Validate that stops follow logical city order (routeOrder) within each country. Only enforced when cities have explicit routeOrder set (> 0). */
+  private async validateStopsOrder(cityIds: string[]): Promise<void> {
+    if (cityIds.length <= 1) return;
+    const cities = await this.prisma.city.findMany({
+      where: { id: { in: cityIds } },
+      select: { id: true, countryId: true, routeOrder: true },
+    });
+    const byId = new Map(cities.map((c) => [c.id, c]));
+    for (let i = 1; i < cityIds.length; i++) {
+      const prev = byId.get(cityIds[i - 1]);
+      const curr = byId.get(cityIds[i]);
+      if (!prev || !curr) continue;
+      const sameCountry = prev.countryId === curr.countryId;
+      const wrongOrder = prev.routeOrder >= curr.routeOrder;
+      const hasExplicitOrder = prev.routeOrder > 0 || curr.routeOrder > 0;
+      if (sameCountry && wrongOrder && hasExplicitOrder) {
+        throw new BadRequestException(
+          `Cities must follow logical route order within a country (e.g. Aleppo → Homs → Damascus). Check city routeOrder.`,
+        );
+      }
+    }
+  }
+
   async create(dto: CreateTripDto, imageFile?: Express.Multer.File) {
     let imageUrl = dto.imageUrl;
 
@@ -21,21 +48,70 @@ export class TripsService {
       imageUrl = uploadResult.publicUrl;
     }
 
-    // Ensure price is a number (handle multipart form data)
-    const price = typeof dto.price === 'string' 
-      ? Number(dto.price) 
-      : dto.price;
+    const price = typeof dto.price === 'string' ? Number(dto.price) : dto.price;
 
-    // Ensure activityIds is an array (handle multipart form data quirks)
     let activityIds: string[] | undefined;
     const rawActivityIds = (dto as any).activityIds;
     if (rawActivityIds !== undefined && rawActivityIds !== null) {
-      if (Array.isArray(rawActivityIds)) {
-        activityIds = rawActivityIds;
-      } else {
-        // Handle case where multer might give us a single value
-        activityIds = [String(rawActivityIds)];
-      }
+      activityIds = Array.isArray(rawActivityIds)
+        ? rawActivityIds
+        : [String(rawActivityIds)];
+    }
+
+    const useStops = dto.stops && dto.stops.length > 0;
+    if (useStops) {
+      const cityIds = dto.stops!.map((s) => s.cityId);
+      await this.validateStopsOrder(cityIds);
+      const first = dto.stops![0];
+      const trip = await this.prisma.trip.create({
+        data: {
+          name: dto.name,
+          description: dto.description,
+          imageUrl,
+          cityId: first.cityId,
+          hotelId: first.hotelId ?? undefined,
+          price,
+          activities:
+            activityIds && activityIds.length > 0
+              ? { connect: activityIds.map((id) => ({ id })) }
+              : undefined,
+          stops: {
+            create: dto.stops!.map((s, idx) => ({
+              cityId: s.cityId,
+              hotelId: s.hotelId ?? null,
+              order: idx,
+              days: s.days ?? 1,
+              activities:
+                s.activityIds && s.activityIds.length > 0
+                  ? { connect: s.activityIds.map((id) => ({ id })) }
+                  : undefined,
+              places:
+                s.placeIds && s.placeIds.length > 0
+                  ? { connect: s.placeIds.map((id) => ({ id })) }
+                  : undefined,
+            })),
+          },
+        },
+        include: {
+          city: true,
+          hotel: true,
+          activities: true,
+          stops: {
+            orderBy: { order: 'asc' },
+            include: {
+              city: true,
+              hotel: true,
+              activities: true,
+              places: { include: { city: true } },
+            },
+          },
+        },
+      });
+      return trip;
+    }
+
+    if (!dto.cityId) {
+      throw new BadRequestException('Either cityId or stops must be provided.');
     }
 
     return this.prisma.trip.create({
@@ -46,11 +122,24 @@ export class TripsService {
         cityId: dto.cityId,
         hotelId: dto.hotelId,
         price,
-        activities: activityIds && activityIds.length > 0
-          ? {
-              connect: activityIds.map((id) => ({ id })),
-            }
-          : undefined,
+        activities:
+          activityIds && activityIds.length > 0
+            ? { connect: activityIds.map((id) => ({ id })) }
+            : undefined,
+      },
+      include: {
+        city: true,
+        hotel: true,
+        activities: true,
+        stops: {
+          orderBy: { order: 'asc' },
+          include: {
+            city: true,
+            hotel: true,
+            activities: true,
+            places: { include: { city: true } },
+          },
+        },
       },
     });
   }
@@ -63,6 +152,15 @@ export class TripsService {
         city: true,
         hotel: true,
         activities: true,
+        stops: {
+          orderBy: { order: 'asc' },
+          include: {
+            city: true,
+            hotel: true,
+            activities: true,
+            places: { include: { city: true } },
+          },
+        },
       },
     });
   }
@@ -75,6 +173,15 @@ export class TripsService {
         hotel: true,
         activities: true,
         reservations: true,
+        stops: {
+          orderBy: { order: 'asc' },
+          include: {
+            city: true,
+            hotel: true,
+            activities: true,
+            places: { include: { city: true } },
+          },
+        },
       },
     });
 
@@ -99,6 +206,60 @@ export class TripsService {
       imageUrl = uploadResult.publicUrl;
     }
 
+    const useStops = dto.stops && dto.stops.length > 0;
+    if (useStops) {
+      const cityIds = dto.stops!.map((s) => s.cityId);
+      await this.validateStopsOrder(cityIds);
+      const first = dto.stops![0];
+      await this.prisma.tripStop.deleteMany({ where: { tripId: id } });
+      return this.prisma.trip.update({
+        where: { id },
+        data: {
+          name: dto.name,
+          description: dto.description,
+          imageUrl,
+          cityId: first.cityId,
+          hotelId: first.hotelId ?? null,
+          price:
+            dto.price !== undefined
+              ? typeof dto.price === 'string'
+                ? Number(dto.price)
+                : dto.price
+              : undefined,
+          stops: {
+            create: dto.stops!.map((s, idx) => ({
+              cityId: s.cityId,
+              hotelId: s.hotelId ?? null,
+              order: idx,
+              days: s.days ?? 1,
+              activities:
+                s.activityIds && s.activityIds.length > 0
+                  ? { connect: s.activityIds.map((id) => ({ id })) }
+                  : undefined,
+              places:
+                s.placeIds && s.placeIds.length > 0
+                  ? { connect: s.placeIds.map((id) => ({ id })) }
+                  : undefined,
+            })),
+          },
+        },
+        include: {
+          city: true,
+          hotel: true,
+          activities: true,
+          stops: {
+            orderBy: { order: 'asc' },
+            include: {
+              city: true,
+              hotel: true,
+              activities: true,
+              places: { include: { city: true } },
+            },
+          },
+        },
+      });
+    }
+
     const data: any = {
       name: dto.name,
       description: dto.description,
@@ -107,21 +268,43 @@ export class TripsService {
       hotelId: dto.hotelId,
     };
 
-    // Only include price if it's defined and convert to number
     if (dto.price !== undefined) {
-      data.price = typeof dto.price === 'string' 
-        ? Number(dto.price) 
-        : dto.price;
+      data.price =
+        typeof dto.price === 'string' ? Number(dto.price) : dto.price;
     }
 
     return this.prisma.trip.update({
       where: { id },
       data,
+      include: {
+        city: true,
+        hotel: true,
+        activities: true,
+        stops: {
+          orderBy: { order: 'asc' },
+          include: {
+            city: true,
+            hotel: true,
+            activities: true,
+            places: { include: { city: true } },
+          },
+        },
+      },
     });
   }
 
   async remove(id: string) {
     await this.ensureExists(id);
+
+    // Delete trip reservations
+    await this.prisma.tripReservation.deleteMany({
+      where: { tripId: id },
+    });
+
+    // Delete trip stops (also handled by onDelete: Cascade, but explicit for safety)
+    await this.prisma.tripStop.deleteMany({
+      where: { tripId: id },
+    });
 
     await this.prisma.trip.delete({
       where: { id },

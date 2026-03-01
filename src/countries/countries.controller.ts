@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Patch,
+  Put,
   Post,
   UploadedFile,
   UseGuards,
@@ -49,6 +50,18 @@ export class CountriesController {
   @Roles(Role.ADMIN)
   @UseInterceptors(FileInterceptor('image'))
   update(
+    @Param('id') id: string,
+    @Body() dto: UpdateCountryDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
+    return this.countriesService.update(id, dto, image);
+  }
+
+  @Put(':id')
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @UseInterceptors(FileInterceptor('image'))
+  updatePut(
     @Param('id') id: string,
     @Body() dto: UpdateCountryDto,
     @UploadedFile() image?: Express.Multer.File,

@@ -158,6 +158,17 @@ export class UsersService {
       );
     }
 
+    // Delete user's reservations, trip reservations, and preferences
+    await this.prisma.reservation.deleteMany({
+      where: { userId: id },
+    });
+    await this.prisma.tripReservation.deleteMany({
+      where: { userId: id },
+    });
+    await this.prisma.userPreference.deleteMany({
+      where: { userId: id },
+    });
+
     await this.prisma.user.delete({
       where: { id },
     });
@@ -169,4 +180,3 @@ export class UsersService {
     return bcrypt.hash(password, 12);
   }
 }
-

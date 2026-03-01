@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Patch,
+  Put,
   Post,
   Query,
   UploadedFile,
@@ -50,6 +51,18 @@ export class CitiesController {
   @Roles(Role.ADMIN)
   @UseInterceptors(FileInterceptor('image'))
   update(
+    @Param('id') id: string,
+    @Body() dto: UpdateCityDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
+    return this.citiesService.update(id, dto, image);
+  }
+
+  @Put(':id')
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @UseInterceptors(FileInterceptor('image'))
+  updatePut(
     @Param('id') id: string,
     @Body() dto: UpdateCityDto,
     @UploadedFile() image?: Express.Multer.File,

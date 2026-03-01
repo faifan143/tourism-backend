@@ -22,6 +22,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { UsersModule } from './users/users.module';
 import { CommonModule } from './common/common.module';
 import { PermissionsModule } from './permissions/permissions.module';
+import { OllamaModule } from './ollama/ollama.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { PermissionsModule } from './permissions/permissions.module';
     DashboardModule,
     UsersModule,
     PermissionsModule,
+    OllamaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -12,6 +13,7 @@ import { PrismaService } from '../database/prisma.service';
 import { canCreateRole, hasAdminAccess } from '../common/utils/roles.util';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { SignupDto } from './dto/signup.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
@@ -53,6 +55,44 @@ export class AuthService {
     });
 
     return this.stripSensitiveFields(createdUser);
+  }
+
+  /** Public signup: create a user with USER role and return token (same shape as login). */
+  async signup(dto: SignupDto) {
+    const [existingByEmail, existingByUsername] = await Promise.all([
+      this.prisma.user.findUnique({ where: { email: dto.email } }),
+      this.prisma.user.findUnique({ where: { username: dto.username } }),
+    ]);
+
+    if (existingByEmail) {
+      throw new ConflictException('Email already in use.');
+    }
+    if (existingByUsername) {
+      throw new ConflictException('Username already in use.');
+    }
+
+    const rawPassword = dto.password;
+    if (rawPassword == null || typeof rawPassword !== 'string' || rawPassword.length < 8) {
+      throw new BadRequestException('Password is required and must be at least 8 characters.');
+    }
+    const password = await this.hashPassword(rawPassword);
+    const createdUser = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        username: dto.username,
+        password,
+        role: Role.USER,
+      },
+    });
+
+    const accessToken = await this.signToken(createdUser);
+    const permissions = await this.getPermissions(createdUser.id, createdUser.role);
+
+    return {
+      accessToken,
+      user: this.stripSensitiveFields(createdUser),
+      permissions,
+    };
   }
 
   async login(dto: LoginDto) {
@@ -98,6 +138,9 @@ export class AuthService {
   }
 
   private async hashPassword(password: string): Promise<string> {
+    if (password == null || typeof password !== 'string' || password.length === 0) {
+      throw new BadRequestException('Password is required.');
+    }
     return bcrypt.hash(password, 12);
   }
 

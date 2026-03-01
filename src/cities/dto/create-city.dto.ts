@@ -1,4 +1,5 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateCityDto {
   @IsString()
@@ -15,4 +16,11 @@ export class CreateCityDto {
 
   @IsString()
   countryId!: string;
+
+  /** Logical route order within country (e.g. Aleppo=1, Homs=2, Damascus=3). Used for multi-city trip validation. */
+  @IsOptional()
+  @Transform(({ value }) => (value === '' || value === undefined ? undefined : Number(value)))
+  @IsInt()
+  @Min(0)
+  routeOrder?: number;
 }

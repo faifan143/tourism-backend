@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Patch,
+  Put,
   Post,
   Query,
   UploadedFile,
@@ -29,8 +30,7 @@ export class TripsController {
   constructor(private readonly tripsService: TripsService) {}
 
   @Post()
-  @UseGuards(JwtGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(JwtGuard)
   @UseInterceptors(FileInterceptor('image'))
   create(
     @Body() dto: CreateTripDto,
@@ -54,6 +54,18 @@ export class TripsController {
   @Scope(PermissionScope.TRIP, 'id')
   @UseInterceptors(FileInterceptor('image'))
   update(
+    @Param('id') id: string,
+    @Body() dto: UpdateTripDto,
+    @UploadedFile() image?: Express.Multer.File,
+  ) {
+    return this.tripsService.update(id, dto, image);
+  }
+
+  @Put(':id')
+  @UseGuards(JwtGuard, ScopeGuard)
+  @Scope(PermissionScope.TRIP, 'id')
+  @UseInterceptors(FileInterceptor('image'))
+  updatePut(
     @Param('id') id: string,
     @Body() dto: UpdateTripDto,
     @UploadedFile() image?: Express.Multer.File,

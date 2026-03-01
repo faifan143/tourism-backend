@@ -26,9 +26,10 @@ export class HotelsService {
     }
 
     // Ensure pricePerNight is a number (handle multipart form data)
-    const pricePerNight = typeof dto.pricePerNight === 'string' 
-      ? Number(dto.pricePerNight) 
-      : dto.pricePerNight;
+    const pricePerNight =
+      typeof dto.pricePerNight === 'string'
+        ? Number(dto.pricePerNight)
+        : dto.pricePerNight;
 
     // Handle roomTypes - ensure it's an array and parse if needed
     let roomTypes: CreateRoomTypeDto[] | undefined;
@@ -52,17 +53,27 @@ export class HotelsService {
         imageUrl,
         cityId: dto.cityId,
         pricePerNight,
-        roomTypes: roomTypes && roomTypes.length > 0
-          ? {
-              create: roomTypes.map((rt) => ({
-                name: rt.name,
-                description: rt.description,
-                maxGuests: typeof rt.maxGuests === 'string' ? Number(rt.maxGuests) : rt.maxGuests,
-                pricePerNight: typeof rt.pricePerNight === 'string' ? Number(rt.pricePerNight) : rt.pricePerNight,
-                capacity: typeof rt.capacity === 'string' ? Number(rt.capacity) : rt.capacity,
-              })),
-            }
-          : undefined,
+        roomTypes:
+          roomTypes && roomTypes.length > 0
+            ? {
+                create: roomTypes.map((rt) => ({
+                  name: rt.name,
+                  description: rt.description,
+                  maxGuests:
+                    typeof rt.maxGuests === 'string'
+                      ? Number(rt.maxGuests)
+                      : rt.maxGuests,
+                  pricePerNight:
+                    typeof rt.pricePerNight === 'string'
+                      ? Number(rt.pricePerNight)
+                      : rt.pricePerNight,
+                  capacity:
+                    typeof rt.capacity === 'string'
+                      ? Number(rt.capacity)
+                      : rt.capacity,
+                })),
+              }
+            : undefined,
       },
       include: {
         roomTypes: true,
@@ -72,12 +83,14 @@ export class HotelsService {
     // Create initial rooms for room types that specify initialRoomCount
     if (roomTypes && roomTypes.length > 0) {
       for (const rt of roomTypes) {
-        const initialRoomCount = rt.initialRoomCount 
-          ? (typeof rt.initialRoomCount === 'string' ? Number(rt.initialRoomCount) : rt.initialRoomCount)
+        const initialRoomCount = rt.initialRoomCount
+          ? typeof rt.initialRoomCount === 'string'
+            ? Number(rt.initialRoomCount)
+            : rt.initialRoomCount
           : 0;
 
         if (initialRoomCount > 0) {
-          const roomType = hotel.roomTypes.find(r => r.name === rt.name);
+          const roomType = hotel.roomTypes.find((r) => r.name === rt.name);
           if (roomType) {
             const rooms: Array<{
               roomTypeId: string;
@@ -126,11 +139,13 @@ export class HotelsService {
         city: true,
         roomTypes: {
           include: {
-            rooms: isAdmin ? true : {
-              where: {
-                status: RoomStatus.AVAILABLE,
-              },
-            },
+            rooms: isAdmin
+              ? true
+              : {
+                  where: {
+                    status: RoomStatus.AVAILABLE,
+                  },
+                },
           },
         },
       },
@@ -158,11 +173,13 @@ export class HotelsService {
         city: true,
         roomTypes: {
           include: {
-            rooms: isAdmin ? true : {
-              where: {
-                status: RoomStatus.AVAILABLE,
-              },
-            },
+            rooms: isAdmin
+              ? true
+              : {
+                  where: {
+                    status: RoomStatus.AVAILABLE,
+                  },
+                },
           },
         },
         trips: true,
@@ -213,9 +230,10 @@ export class HotelsService {
 
     // Only include pricePerNight if it's defined and convert to number
     if (dto.pricePerNight !== undefined) {
-      data.pricePerNight = typeof dto.pricePerNight === 'string' 
-        ? Number(dto.pricePerNight) 
-        : dto.pricePerNight;
+      data.pricePerNight =
+        typeof dto.pricePerNight === 'string'
+          ? Number(dto.pricePerNight)
+          : dto.pricePerNight;
     }
 
     // Handle roomTypes - ensure it's an array and parse if needed
@@ -256,16 +274,16 @@ export class HotelsService {
 
     // Handle room types: update existing, create new, delete removed
     if (roomTypes !== undefined) {
-      const existingRoomTypeIds = existingHotel.roomTypes.map(rt => rt.id);
+      const existingRoomTypeIds = existingHotel.roomTypes.map((rt) => rt.id);
       const incomingRoomTypeIds = roomTypes
-        .filter(rt => rt.id)
-        .map(rt => rt.id!);
+        .filter((rt) => rt.id)
+        .map((rt) => rt.id!);
 
       // Delete room types that are not in the incoming list
       const roomTypesToDelete = existingRoomTypeIds.filter(
-        id => !incomingRoomTypeIds.includes(id)
+        (id) => !incomingRoomTypeIds.includes(id),
       );
-      
+
       if (roomTypesToDelete.length > 0) {
         // First, delete all rooms associated with these room types
         await this.prisma.room.deleteMany({
@@ -288,9 +306,16 @@ export class HotelsService {
         const roomTypeData = {
           name: rt.name,
           description: rt.description,
-          maxGuests: typeof rt.maxGuests === 'string' ? Number(rt.maxGuests) : rt.maxGuests,
-          pricePerNight: typeof rt.pricePerNight === 'string' ? Number(rt.pricePerNight) : rt.pricePerNight,
-          capacity: typeof rt.capacity === 'string' ? Number(rt.capacity) : rt.capacity,
+          maxGuests:
+            typeof rt.maxGuests === 'string'
+              ? Number(rt.maxGuests)
+              : rt.maxGuests,
+          pricePerNight:
+            typeof rt.pricePerNight === 'string'
+              ? Number(rt.pricePerNight)
+              : rt.pricePerNight,
+          capacity:
+            typeof rt.capacity === 'string' ? Number(rt.capacity) : rt.capacity,
         };
 
         if (rt.id && existingRoomTypeIds.includes(rt.id)) {
@@ -309,8 +334,10 @@ export class HotelsService {
           });
 
           // Create initial rooms for newly created room types only
-          const initialRoomCount = rt.initialRoomCount 
-            ? (typeof rt.initialRoomCount === 'string' ? Number(rt.initialRoomCount) : rt.initialRoomCount)
+          const initialRoomCount = rt.initialRoomCount
+            ? typeof rt.initialRoomCount === 'string'
+              ? Number(rt.initialRoomCount)
+              : rt.initialRoomCount
             : 0;
 
           if (initialRoomCount > 0) {
@@ -363,6 +390,46 @@ export class HotelsService {
   async remove(id: string) {
     await this.ensureExists(id);
 
+    // Get all room type IDs for this hotel
+    const roomTypes = await this.prisma.roomType.findMany({
+      where: { hotelId: id },
+      select: { id: true },
+    });
+    const roomTypeIds = roomTypes.map((rt) => rt.id);
+
+    if (roomTypeIds.length > 0) {
+      // Delete reservations linked to rooms or room types of this hotel
+      await this.prisma.reservation.deleteMany({
+        where: {
+          OR: [
+            { roomTypeId: { in: roomTypeIds } },
+            { room: { roomTypeId: { in: roomTypeIds } } },
+          ],
+        },
+      });
+
+      // Delete all rooms belonging to these room types
+      await this.prisma.room.deleteMany({
+        where: { roomTypeId: { in: roomTypeIds } },
+      });
+
+      // Delete the room types themselves
+      await this.prisma.roomType.deleteMany({
+        where: { hotelId: id },
+      });
+    }
+
+    // Nullify hotel reference on trips and trip stops (optional FK)
+    await this.prisma.trip.updateMany({
+      where: { hotelId: id },
+      data: { hotelId: null },
+    });
+    await this.prisma.tripStop.updateMany({
+      where: { hotelId: id },
+      data: { hotelId: null },
+    });
+
+    // Now safe to delete the hotel
     await this.prisma.hotel.delete({
       where: { id },
     });
@@ -371,36 +438,40 @@ export class HotelsService {
   }
 
   findRoomTypesByHotel(hotelId: string, isAdmin: boolean = false) {
-    return this.prisma.roomType.findMany({
-      where: { hotelId },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        rooms: isAdmin ? true : {
-          where: {
-            status: RoomStatus.AVAILABLE,
-          },
-        },
-        reservations: {
-          where: {
-            status: {
-              in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED],
+    return this.prisma.roomType
+      .findMany({
+        where: { hotelId },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          rooms: isAdmin
+            ? true
+            : {
+                where: {
+                  status: RoomStatus.AVAILABLE,
+                },
+              },
+          reservations: {
+            where: {
+              status: {
+                in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED],
+              },
             },
           },
         },
-      },
-    }).then((roomTypes) => {
-      // For regular users, transform to show only available room counts
-      if (!isAdmin) {
-        return roomTypes.map((roomType) => {
-          const { rooms, ...roomTypeWithoutRooms } = roomType;
-          return {
-            ...roomTypeWithoutRooms,
-            availableRoomsCount: rooms.length,
-          };
-        });
-      }
-      return roomTypes;
-    });
+      })
+      .then((roomTypes) => {
+        // For regular users, transform to show only available room counts
+        if (!isAdmin) {
+          return roomTypes.map((roomType) => {
+            const { rooms, ...roomTypeWithoutRooms } = roomType;
+            return {
+              ...roomTypeWithoutRooms,
+              availableRoomsCount: rooms.length,
+            };
+          });
+        }
+        return roomTypes;
+      });
   }
 
   async addRoomType(hotelId: string, dto: CreateRoomTypeDto) {
@@ -411,15 +482,26 @@ export class HotelsService {
         hotelId,
         name: dto.name,
         description: dto.description,
-        maxGuests: typeof dto.maxGuests === 'string' ? Number(dto.maxGuests) : dto.maxGuests,
-        pricePerNight: typeof dto.pricePerNight === 'string' ? Number(dto.pricePerNight) : dto.pricePerNight,
-        capacity: typeof dto.capacity === 'string' ? Number(dto.capacity) : dto.capacity,
+        maxGuests:
+          typeof dto.maxGuests === 'string'
+            ? Number(dto.maxGuests)
+            : dto.maxGuests,
+        pricePerNight:
+          typeof dto.pricePerNight === 'string'
+            ? Number(dto.pricePerNight)
+            : dto.pricePerNight,
+        capacity:
+          typeof dto.capacity === 'string'
+            ? Number(dto.capacity)
+            : dto.capacity,
       },
     });
 
     // Create initial rooms if specified
-    const initialRoomCount = dto.initialRoomCount 
-      ? (typeof dto.initialRoomCount === 'string' ? Number(dto.initialRoomCount) : dto.initialRoomCount)
+    const initialRoomCount = dto.initialRoomCount
+      ? typeof dto.initialRoomCount === 'string'
+        ? Number(dto.initialRoomCount)
+        : dto.initialRoomCount
       : 0;
 
     if (initialRoomCount > 0) {
@@ -464,13 +546,20 @@ export class HotelsService {
 
     // Convert numeric fields if provided
     if (dto.maxGuests !== undefined) {
-      data.maxGuests = typeof dto.maxGuests === 'string' ? Number(dto.maxGuests) : dto.maxGuests;
+      data.maxGuests =
+        typeof dto.maxGuests === 'string'
+          ? Number(dto.maxGuests)
+          : dto.maxGuests;
     }
     if (dto.pricePerNight !== undefined) {
-      data.pricePerNight = typeof dto.pricePerNight === 'string' ? Number(dto.pricePerNight) : dto.pricePerNight;
+      data.pricePerNight =
+        typeof dto.pricePerNight === 'string'
+          ? Number(dto.pricePerNight)
+          : dto.pricePerNight;
     }
     if (dto.capacity !== undefined) {
-      data.capacity = typeof dto.capacity === 'string' ? Number(dto.capacity) : dto.capacity;
+      data.capacity =
+        typeof dto.capacity === 'string' ? Number(dto.capacity) : dto.capacity;
     }
 
     return this.prisma.roomType.update({
@@ -481,6 +570,18 @@ export class HotelsService {
 
   async removeRoomType(roomTypeId: string) {
     await this.ensureRoomTypeExists(roomTypeId);
+
+    // Delete reservations linked to this room type or its rooms
+    await this.prisma.reservation.deleteMany({
+      where: {
+        OR: [{ roomTypeId }, { room: { roomTypeId } }],
+      },
+    });
+
+    // Delete all rooms in this room type
+    await this.prisma.room.deleteMany({
+      where: { roomTypeId },
+    });
 
     await this.prisma.roomType.delete({
       where: { id: roomTypeId },
@@ -544,6 +645,11 @@ export class HotelsService {
 
   async removeRoom(roomId: string) {
     await this.ensureRoomExists(roomId);
+
+    // Delete reservations linked to this room
+    await this.prisma.reservation.deleteMany({
+      where: { roomId },
+    });
 
     await this.prisma.room.delete({
       where: { id: roomId },

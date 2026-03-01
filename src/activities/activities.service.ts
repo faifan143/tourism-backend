@@ -90,6 +90,11 @@ export class ActivitiesService {
   async remove(id: string) {
     await this.ensureExists(id);
 
+    // Delete embedding for this activity
+    await this.prisma.embedding.deleteMany({
+      where: { ownerId: id },
+    });
+
     await this.prisma.activity.delete({
       where: { id },
     });
