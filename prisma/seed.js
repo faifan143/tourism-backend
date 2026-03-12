@@ -918,39 +918,32 @@ async function main() {
         ? pickN(cityActivities, Math.min(Math.floor(Math.random() * 3) + 2, cityActivities.length))
         : pickN(allActivities, Math.min(3, allActivities.length));
 
-      // Disconnect old activities before upserting to avoid relation conflicts
       const existingTrip = await prisma.trip.findFirst({ where: { name: tripData.name } });
+      const tripDataPayload = {
+        name: tripData.name,
+        description: tripData.description,
+        imageUrl: placeholderImage(tripData.name),
+        cityId: city.id,
+        hotelId: hotel?.id,
+        price: tripData.price,
+        activities: { connect: tripActivities.map((a) => ({ id: a.id })) },
+      };
+
+      let trip;
       if (existingTrip) {
         await prisma.trip.update({
           where: { id: existingTrip.id },
           data: { activities: { set: [] } },
         });
+        trip = await prisma.trip.update({
+          where: { id: existingTrip.id },
+          data: tripDataPayload,
+        });
+      } else {
+        trip = await prisma.trip.create({
+          data: tripDataPayload,
+        });
       }
-
-      const trip = await prisma.trip.upsert({
-        where: { id: existingTrip?.id || "__new__" },
-        update: {
-          description: tripData.description,
-          imageUrl: placeholderImage(tripData.name),
-          cityId: city.id,
-          hotelId: hotel?.id,
-          price: tripData.price,
-          activities: {
-            connect: tripActivities.map(a => ({ id: a.id })),
-          },
-        },
-        create: {
-          name: tripData.name,
-          description: tripData.description,
-          imageUrl: placeholderImage(tripData.name),
-          cityId: city.id,
-          hotelId: hotel?.id,
-          price: tripData.price,
-          activities: {
-            connect: tripActivities.map(a => ({ id: a.id })),
-          },
-        },
-      });
       tripMap.set(`${cityName}-${tripData.name}`, trip);
     }
   }
