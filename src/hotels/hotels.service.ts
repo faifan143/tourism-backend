@@ -25,12 +25,6 @@ export class HotelsService {
       imageUrl = uploadResult.publicUrl;
     }
 
-    // Ensure pricePerNight is a number (handle multipart form data)
-    const pricePerNight =
-      typeof dto.pricePerNight === 'string'
-        ? Number(dto.pricePerNight)
-        : dto.pricePerNight;
-
     // Handle roomTypes - ensure it's an array and parse if needed
     let roomTypes: CreateRoomTypeDto[] | undefined;
     const rawRoomTypes = (dto as any).roomTypes;
@@ -52,7 +46,6 @@ export class HotelsService {
         description: dto.description,
         imageUrl,
         cityId: dto.cityId,
-        pricePerNight,
         roomTypes:
           roomTypes && roomTypes.length > 0
             ? {
@@ -227,14 +220,6 @@ export class HotelsService {
       imageUrl,
       cityId: dto.cityId,
     };
-
-    // Only include pricePerNight if it's defined and convert to number
-    if (dto.pricePerNight !== undefined) {
-      data.pricePerNight =
-        typeof dto.pricePerNight === 'string'
-          ? Number(dto.pricePerNight)
-          : dto.pricePerNight;
-    }
 
     // Handle roomTypes - ensure it's an array and parse if needed
     let roomTypes: CreateRoomTypeDto[] | undefined;

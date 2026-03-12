@@ -866,14 +866,12 @@ async function main() {
           description: hotelData.description,
           imageUrl: placeholderImage(hotelData.name),
           cityId: city.id,
-          pricePerNight: hotelData.pricePerNight,
         },
         create: {
           name: hotelData.name,
           description: hotelData.description,
           imageUrl: placeholderImage(hotelData.name),
           cityId: city.id,
-          pricePerNight: hotelData.pricePerNight,
         },
       });
       hotelMap.set(`${cityName}-${hotelData.name}`, hotel);

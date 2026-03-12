@@ -1,11 +1,9 @@
 import {
   IsArray,
-  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
-  Min,
   ValidateNested,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
@@ -26,14 +24,6 @@ export class CreateHotelDto {
 
   @IsUUID()
   cityId!: string;
-
-  @Transform(({ value }) => {
-    if (value === undefined || value === null || value === '') return undefined;
-    return typeof value === 'string' ? Number(value) : value;
-  })
-  @IsNumber()
-  @Min(0)
-  pricePerNight!: number;
 
   @IsOptional()
   @Transform(({ value }) => {

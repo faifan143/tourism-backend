@@ -34,7 +34,11 @@ export class OllamaTripsService {
           orderBy: { name: 'asc' },
           include: {
             places: { take: 30, orderBy: { name: 'asc' } },
-            hotels: { take: 20, orderBy: { name: 'asc' } },
+            hotels: {
+              take: 20,
+              orderBy: { name: 'asc' },
+              include: { roomTypes: { select: { pricePerNight: true } } },
+            },
           },
         },
       },
@@ -71,7 +75,12 @@ export class OllamaTripsService {
           co.cities
             .map(
               (c) =>
-                `- **${c.name}**: places: ${c.places.map((p) => p.name).join(', ') || 'none'}; hotels: ${c.hotels.map((h) => `${h.name} (${h.pricePerNight}/night)`).join(', ') || 'none'}`,
+                `- **${c.name}**: places: ${c.places.map((p) => p.name).join(', ') || 'none'}; hotels: ${c.hotels.map((h) => {
+                const minPrice = h.roomTypes?.length
+                  ? Math.min(...h.roomTypes.map((rt) => rt.pricePerNight))
+                  : null;
+                return minPrice != null ? `${h.name} (from ${minPrice}/night)` : h.name;
+              }).join(', ') || 'none'}`,
             )
             .join('\n'),
       ),

@@ -122,8 +122,6 @@ model Hotel {
   cityId      String
   city        City          @relation(fields: [cityId], references: [id])
 
-  pricePerNight Float       @default(100)
-
   roomTypes     RoomType[]
   trips         Trip[]
   tripStops     TripStop[]
